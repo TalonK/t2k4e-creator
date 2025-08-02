@@ -698,6 +698,10 @@ const Step3_CareerTerm = ({ character, setCharacter, nextStep, setWarBrokeOut })
         }
     };
 
+    const handleSkillRemove = (indexToRemove) => {
+        setSkillIncreases(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
+
     const handlePromotion = () => {
         let skillToRoll;
         let newLevelForRoll;
@@ -721,9 +725,20 @@ const Step3_CareerTerm = ({ character, setCharacter, nextStep, setWarBrokeOut })
         setPromotionResult(result);
 
         if (result.success) {
+            let specialtyList;
+            if (selectedCareerData.name === 'Officer' && officerFunctionalArea) {
+                const listRoll = d6();
+                if (listRoll <= 3) {
+                    specialtyList = selectedCareerData.specialties;
+                } else {
+                    specialtyList = gameData.CAREERS_DATA[officerFunctionalArea].specialties;
+                }
+            } else {
+                specialtyList = selectedCareerData.specialties;
+            }
+
             const specialtyRoll = d6();
-            const careerSpecialties = selectedCareerData.specialties;
-            const rolledSpecialty = careerSpecialties[specialtyRoll - 1];
+            const rolledSpecialty = specialtyList[specialtyRoll - 1];
             
             if (character.specialties.some(s => s.startsWith(rolledSpecialty))) {
                 setIsDuplicateSpecialty(true);
@@ -794,7 +809,26 @@ const Step3_CareerTerm = ({ character, setCharacter, nextStep, setWarBrokeOut })
                                         <Button key={s} onClick={() => handleSkillIncrease(s)} disabled={skillPreview[s] === 'A' || skillIncreases.length >= 2 || (isFirstMilitaryTerm && s !== 'Ranged Combat' && !skillIncreases.includes('Ranged Combat'))} title={gameData.SKILL_DESCRIPTIONS[s]}>{s} ({gameData.SKILLS_DATA[s].toUpperCase()})</Button>
                                     ))}
                                 </div>
-                                <p className="mt-2">Selected: {skillIncreases.join(', ')}</p>
+                                {skillIncreases.length > 0 && (
+                                    <div className="mt-2 p-2 border border-zinc-700">
+                                        <h4 className="font-bold text-yellow-500">Selected:</h4>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {skillIncreases.map((skill, index) => {
+                                                const isRemovable = !(isFirstMilitaryTerm && skill === 'Ranged Combat' && index === 0);
+                                                return (
+                                                    <div key={index} className="flex items-center bg-zinc-700 px-2 py-1">
+                                                        <span>{skill}</span>
+                                                        {isRemovable && (
+                                                            <button onClick={() => handleSkillRemove(index)} className="ml-2 text-red-500 hover:text-red-400 font-bold">
+                                                                [x]
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -840,11 +874,18 @@ const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
     const [skillIncreases, setSkillIncreases] = useState([]);
     const [specialty, setSpecialty] = useState('');
     const [language, setLanguage] = useState('');
-    const [termInfo, setTermInfo] = useState(null);
     
     const isDraftee = useMemo(() => {
         return character.finalCareer?.type === 'civilian' && character.finalCareer?.group !== 'Intelligence' && !character.isLocal;
     }, [character]);
+    
+    const needsRangedCombat = isDraftee && !character.skills['Ranged Combat'];
+    
+    useEffect(() => {
+        if (needsRangedCombat) {
+            setSkillIncreases(['Ranged Combat']);
+        }
+    }, [needsRangedCombat]);
 
     const atWarSpecialtyOptions = useMemo(() => {
         if (isDraftee) {
@@ -869,13 +910,16 @@ const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
     }, [character.finalCareer, character.specialties, isDraftee]);
 
     const handleSkillIncrease = (skill) => {
-        if (skillIncreases.length < 2) {
+        if (skillIncreases.length < 2 && !skillIncreases.includes(skill)) {
             setSkillIncreases(prev => [...prev, skill]);
         }
     };
 
+    const handleSkillRemove = (indexToRemove) => {
+        setSkillIncreases(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
+
     const handleNext = () => {
-        setTermInfo({ processing: true });
         const newSkills = { ...character.skills };
         skillIncreases.forEach(skill => {
             const currentLevel = newSkills[skill] || 'F';
@@ -895,9 +939,6 @@ const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
     };
 
     const skillPreview = useMemo(() => {
-        if (termInfo) {
-            return character.skills;
-        }
         const preview = { ...character.skills };
         skillIncreases.forEach(skill => {
             const currentLevel = preview[skill] || 'F';
@@ -905,13 +946,11 @@ const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
             else if (currentLevel > 'A') preview[skill] = String.fromCharCode(currentLevel.charCodeAt(0) - 1);
         });
         return preview;
-    }, [character.skills, skillIncreases, termInfo]);
+    }, [character.skills, skillIncreases]);
     
     useEffect(() => {
         if (specialty !== 'Linguist') setLanguage('');
     }, [specialty]);
-    
-    const needsRangedCombat = isDraftee && (!character.skills['Ranged Combat'] || character.skills['Ranged Combat'] > 'D');
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -925,10 +964,29 @@ const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
                         {needsRangedCombat && <p className="text-yellow-400 font-bold">As a draftee, one increase MUST be Ranged Combat.</p>}
                         <div className="flex flex-wrap gap-2 mt-2">
                             {Object.keys(gameData.SKILLS_DATA).map(s => (
-                                <Button key={s} onClick={() => handleSkillIncrease(s)} disabled={skillPreview[s] === 'A' || skillIncreases.length >= 2 || skillIncreases.includes(s) || (needsRangedCombat && s !== 'Ranged Combat' && !skillIncreases.includes('Ranged Combat'))} title={gameData.SKILL_DESCRIPTIONS[s]}>{s} ({gameData.SKILLS_DATA[s].toUpperCase()})</Button>
+                                <Button key={s} onClick={() => handleSkillIncrease(s)} disabled={skillPreview[s] === 'A' || skillIncreases.length >= 2 || skillIncreases.includes(s) || (needsRangedCombat && s === 'Ranged Combat')} title={gameData.SKILL_DESCRIPTIONS[s]}>{s} ({gameData.SKILLS_DATA[s].toUpperCase()})</Button>
                             ))}
                         </div>
-                        <p className="mt-2">Selected: {skillIncreases.join(', ')}</p>
+                         {skillIncreases.length > 0 && (
+                            <div className="mt-2 p-2 border border-zinc-700">
+                                <h4 className="font-bold text-yellow-500">Selected:</h4>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                    {skillIncreases.map((skill, index) => {
+                                        const isRemovable = !(needsRangedCombat && skill === 'Ranged Combat');
+                                        return (
+                                            <div key={index} className="flex items-center bg-zinc-700 px-2 py-1">
+                                                <span>{skill}</span>
+                                                {isRemovable && (
+                                                    <button onClick={() => handleSkillRemove(index)} className="ml-2 text-red-500 hover:text-red-400 font-bold">
+                                                        [x]
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     {skillIncreases.length === 2 && (
                         <>
