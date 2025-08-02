@@ -114,7 +114,7 @@ const rollCheck = (attrDie, skillDie) => {
 const getDie = (level) => level ? gameData.ATTRIBUTE_DICE[level] : null;
 
 const generateCharacterSheetText = (character) => {
-    let text = `TWILIGHT: 2000 CHARACTER SHEET\n`;
+    let text = `TWILIGHT:2000 CHARACTER SHEET\n`;
     text += `===================================\n\n`;
     text += `Name: ${character.name}\n`;
     text += `Nationality: ${character.nationality}\n`;
