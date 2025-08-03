@@ -1058,7 +1058,7 @@ const CharacterSheet = ({ character, startOver }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                  <div>
-                    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">SKILLS & ATTRIBUTES</h3>
+                    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">ATTRIBUTES & SKILLS</h3>
                      <div className="grid grid-cols-2 gap-x-4">
                         {['str', 'agl', 'int', 'emp'].map(attrKey => {
                             const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === attrKey);
