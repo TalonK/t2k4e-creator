@@ -1185,8 +1185,9 @@ export default function App() {
     return (
         <>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Roboto+Mono&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Roboto+Mono&family=Stardos+Stencil:wght@700&display=swap');
                 
+                .font-header { font-family: 'Stardos Stencil', cursive; }
                 .font-display { font-family: 'Chakra Petch', sans-serif; }
                 .font-body { font-family: 'Roboto Mono', monospace; }
 
@@ -1197,7 +1198,7 @@ export default function App() {
             <div className="text-zinc-300 min-h-screen p-4 sm:p-8 font-body">
                 <div className="max-w-4xl mx-auto">
                     <header className="text-center mb-8">
-                        <h1 className="text-5xl font-display text-yellow-400 tracking-widest">TWILIGHT:2000</h1>
+                        <h1 className="text-5xl font-header text-yellow-400 tracking-widest">TWILIGHT:2000</h1>
                         <p className="text-lg text-zinc-400">Lifepath Character Creator</p>
                     </header>
                     <main>
