@@ -179,7 +179,7 @@ const generateCharacterSheetText = (character) => {
 
     text += `--- GEAR ---\n`;
     character.gear.forEach(item => text += `- ${item}\n`);
-    text += `- D6 rations of food and water, D6 rounds of ammo\n\n`;
+    text += `- D6 rations of food, D6 rations of fresh water, D6 rounds of ammo\n\n`;
 
     text += `--- CAREER PATH ---\n`;
     character.careerPath.forEach((term, i) => {
@@ -1104,7 +1104,7 @@ const CharacterSheet = ({ character, startOver }) => {
                 <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">GEAR</h3>
                 <ul className="list-disc list-inside">
                     {character.gear.map((item, i) => <li key={i}>{item}</li>)}
-                    <li>D6 rations of food and water, D6 rounds of ammo</li>
+                    <li>D6 rations of food, D6 rations of fresh water, D6 rounds of ammo</li>
                 </ul>
             </div>
 
