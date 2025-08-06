@@ -760,7 +760,7 @@ const Step3_CareerTerm = ({ character, setCharacter, nextStep, setWarBrokeOut })
             {showWarModal && (
                  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
                     <Card className="max-w-md w-full text-center">
-                        <h3 className="text-3xl font-display text-red-500 mb-4">WAR BREAKS OUT</h3>
+                        <h3 className="text-3xl font-title text-red-500 mb-4">WAR BREAKS OUT</h3>
                         <p className="mb-4 text-zinc-300">{warModalInfo.message}</p>
                         {warModalInfo.conscriptionMessage && (
                             <p className="font-bold text-yellow-400 text-xl mb-6">{warModalInfo.conscriptionMessage}</p>
