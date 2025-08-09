@@ -1075,17 +1075,6 @@ const CharacterSheet = ({ character, startOver }) => {
         });
         y += lineHeight;
 
-        // --- GEAR ---
-        addSectionHeader('GEAR');
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        const allGear = [...character.gear, 'D6 rations of food, D6 rations of water, D6 rounds of ammo'];
-        allGear.forEach(item => {
-            doc.text(`- ${item}`, margin, y);
-            y += lineHeight;
-        });
-        y += lineHeight;
-
         // --- CAREER PATH ---
         addSectionHeader('CAREER PATH');
         doc.setFont('helvetica', 'normal');
@@ -1109,6 +1098,17 @@ const CharacterSheet = ({ character, startOver }) => {
             doc.text(line, margin, y);
             y += lineHeight;
         });
+
+	// --- GEAR ---
+        addSectionHeader('GEAR');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        const allGear = [...character.gear, 'D6 rations of food, D6 rations of water, D6 rounds of ammo'];
+        allGear.forEach(item => {
+            doc.text(`- ${item}`, margin, y);
+            y += lineHeight;
+        });
+        y += lineHeight;
 
         // --- SAVE THE PDF ---
         doc.save(`T2K4E - ${character.name.replace(/\s/g, '_') || 'character'}.pdf`);
