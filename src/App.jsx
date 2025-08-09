@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { jsPDF } from "jspdf";
 
 // ===================================================================================
 // --- GAME DATA ---
@@ -31,12 +32,7 @@ const gameData = {
         "Archer", "Authority", "Biker", "Blacksmith", "Boatman", "Brawler", "Builder", "Chemist", "Close Quarters Specialist", "Combat Awareness", "Combat Engineer", "Combat Medic", "Communications", "Computers", "Cook", "Counselor", "Cryptographer", "Diver", "Electrician", "Farmer", "Field Surgeon", "Fisher", "Forager", "Forward Observer", "Frontline Leader", "General Practitioner", "Gunsmith", "Historian", "Hunter", "Improvised Munitions", "Infiltrator", "Intelligence", "Interrogator", "Investigator", "Killer", "Launcher Crew", "Liar", "Linguist", "Load Carrier", "Locksmith", "Logistician", "Machinegunner", "Martial Artist", "Mechanic", "Melee", "Mountaineer", "Musician", "Navigator", "NBC", "Paratrooper", "Pilot", "Pitcher", "Psy Ops", "Quartermaster", "Racer", "Ranger", "Redleg", "Reloader", "Rider", "Rifleman", "Runner", "Scientist", "Scout", "Scrounger", "SERE Training", "Sidearms", "Sniper", "Tactician", "Tanker", "Teacher", "Thief", "Trader", "Vehicle Gunner", "Veterinarian"
     ],
     SPECIALTY_DESCRIPTIONS: {
-        "Brawler": "Gives you a +1 modifier to CLOSE COMBAT rolls in unarmed close combat.", "Melee": "Gives you a +1 modifier to CLOSE COMBAT rolls for all hand-to-hand combat weapons, such as knives, bayonets, and clubs.", "Killer": "You can kill an incapacitated person outright without suffering any negative effects.", "Martial Artist": "Your unarmed close combat attacks have a crit threshold of 3 instead of 4.", "Machinegunner": "Gives a +1 modifier to HEAVY WEAPONS rolls for firing all types of machine guns.", "Launcher Crew": "Gives a +1 modifier to HEAVY WEAPONS rolls for firing grenade launchers and missile launchers.", "Redleg": "Gives a +1 modifier to HEAVY WEAPONS rolls when firing mortars and howitzers.", "Vehicle Gunner": "Gives a +1 modifier to HEAVY WEAPONS rolls when firing vehicle-mounted cannons.", "Builder": "Gives you a +1 modifier to STAMINA rolls made for base building.", "Load Carrier": "You can carry four additional encumbrance units in your combat gear and four more in your backpack.", "NBC": "Gives a +1 modifier to STAMINA for all infection rolls, even those triggered by radiation or chemical agents. Also lets you identify nuclear, biological, and chemical weapon effects to personnel and equipment.", "Ranger": "Gives you a +1 modifier to STAMINA rolls made for marching, resisting hypothermia, and other hardships.", "SERE Training": "Gives you a +1 modifier to STAMINA rolls made to resist interrogation, Psy Ops, bluffing, and torture effects.", "Biker": "Gives a +1 modifier to DRIVING all motorcycles and bicycles, on or off-road.", "Boatman": "Gives a +1 modifier to DRIVING rolls for piloting boats, including sail and rowed boats.", "Pilot": "Gives a +1 modifier to DRIVING rolls for flying fixed-and rotary-wing aircraft.", "Racer": "Gives a +1 modifier to DRIVING all wheeled vehicles except motorcycles.", "Tanker": "Gives a +1 modifier to DRIVING all tracked vehicles.", "Diver": "Gives a +1 bonus to MOBILITY rolls when swimming, both across the surface and under it. Includes use of SCUBA gear.", "Mountaineer": "Gives a +1 bonus to MOBILITY rolls for rappelling, ascender-climbing, and knot-tying.", "Paratrooper": "Gives a +1 bonus to MOBILITY rolls for skydiving, as well as for reducing damage from falling.", "Pitcher": "Gives a +1 modifier to MOBILITY rolls for thrown weapons, including knives and grenades.", "Rider": "Gives a +1 bonus to MOBILITY rolls for riding fast and performing maneuvers on horseback. Also negates the negative modifier for shooting from horseback.", "Runner": "Gives a +1 bonus to MOBILITY rolls for running.", "Archer": "Gives a +1 modifier to RANGED COMBAT rolls for bows and crossbows.", "Reloader": "Gives a +1 modifier to RANGED COMBAT rolls made to reload your firearm.", "Rifleman": "Gives a +1 modifier to RANGED COMBAT rolls for firing assault rifles, carbines, submachine guns, and shotguns.", "Sidearms": "Gives a +1 modifier to RANGED COMBAT rolls for firing revolvers and pistols.", "Sniper": "Gives a +1 modifier to RANGED COMBAT rolls for firing sniper rifles and hunting rifles.", "Combat Awareness": "When drawing initiative, you may draw two cards instead of one and choose which one to act on.", "Forward Observer": "Your RECON skill level counts as one step higher when directing indirect fire.", "Historian": "Roll RECON when you arrive at a new location. If you succeed, the Referee can tell you something significant that has happened here in the past.", "Infiltrator": "Gives you a +1 modifier to RECON rolls when trying to remain undetected.", "Intelligence": "Roll RECON when you spot enemy troops, vehicles, and weapons. If you succeed, the Referee should tell you their stats.", "Investigator": "Roll RECON when you spend a stretch or more investigating the scene of a crime or a battle. If you succeed, the Referee should give you some useful information.", "Scout": "Gives you a +1 modifier to RECON rolls for spotting others and avoiding ambushes.", "Cook": "Gives you one additional ration of food when you or someone else in your group successfully forages, hunts or fishes.", "Farmer": "Gives a +1 modifier to SURVIVAL rolls for farming.", "Fisher": "Gives a +1 modifier to SURVIVAL rolls for fishing.", "Forager": "Gives a +1 modifier to SURVIVAL rolls for foraging to find food.", "Navigator": "Gives a +1 modifier when using SURVIVAL rolls for navigation.", "Hunter": "Gives a +1 modifier to SURVIVAL rolls for hunting to obtain food.", "Quartermaster": "Gives you a +1 modifier to SURVIVAL rolls for making camp and establishing a home base.", "Scrounger": "Gives a +1 modifier to SURVIVAL rolls for scrounging.", "Blacksmith": "Gives a +1 modifier to TECH rolls for metalworking, forging, casting, molding, and smelting.", "Chemist": "Gives a +1 modifier to TECH rolls for distilling grain alcohol for fuel. Also lets you identify chemical substances correctly.", "Combat Engineer": "Gives a +1 modifier to TECH rolls for placing and disarming mines and explosive devices, and to RECON rolls to avoid mines.", "Communications": "Gives a +1 modifier to TECH rolls for maintaining contact on radios, boosting a signal, using Morse code, setting up antennae, and using encryption equipment.", "Computers": "Gives a +1 modifier to TECH rolls for using or tampering with computers and ancillary devices.", "Electrician": "Gives a +1 modifier to TECH rolls for wiring, soldering, disabling, and repairing electrical devices.", "Gunsmith": "Gives a +1 modifier to TECH rolls for repairing firearms.", "Improvised Munitions": "Gives a +1 modifier to TECH rolls for making zip-guns and IEDs.", "Locksmith": "Gives a +1 modifier to TECH rolls for picking locks, cracking safes, and disarming alarms.", "Mechanic": "Gives a +1 modifier to TECH rolls for repairing engines, vehicles, generators, and pumps.", "Scientist": "Roll TECH when you come across a phenomenon of any sort that requires knowledge of physics, biology, geology, or any other natural science. If you succeed, the Referee must give you some useful information about it.", "Frontline Leader": "Gives a +1 bonus to COMMAND rolls for helping someone who is incapacitated by stress. Does not affect unit morale.", "Logistician": "When building a base, you can roll COMMAND instead of any listed skill, but only if you have help by at least one person.", "Tactician": "Roll COMMAND when you spot an enemy force. If you succeed, the Referee must tell you something useful about their current organization and objectives.", "Combat Medic": "Gives a +1 modifier to MEDICAL AID rolls for helping an incapacitated character get back up. No effect on treating critical injuries.", "Counselor": "Gives a +1 modifier to MEDICAL AID rolls for counseling a person suffering from long-term mental trauma.", "Field Surgeon": "Gives a +1 modifier to MEDICAL AID rolls for treating critical injuries.", "General Practitioner": "Gives a +1 modifier to MEDICAL AID rolls for treating disease, poison, and NBC.", "Veterinarian": "Gives a +1 modifier to MEDICAL AID rolls for working on animals.", "Linguist": "You know another language of your choice, well enough to be taken as native on a successful PERSUASION roll.", "Musician": "Gives a +1 bonus to PERSUASION rolls in situations where singing or playing an instrument is helpful. The Referee has final say.", "Interrogator": "Gives a +1 bonus to PERSUASION rolls for extracting information from a prisoner.", "Psy Ops": "Gives a +1 bonus to PERSUASION rolls for changing someone's mind about a particular issue.", "Teacher": "Gives a +1 bonus to PERSUASION rolls for teaching someone a specialty.", "Trader": "Gives a +1 bonus to PERSUASION rolls when negotiating the price of an item.",
-        "Authority": "You can roll COMMAND to calm down a rowdy crowd. This specialty cannot be used on hostile enemies.",
-        "Close Quarters Specialist": "The penalty for shooting in close combat is reduced one step.",
-        "Cryptographer": "Gives a +1 bonus to any TECH roll involving breaking or creating encrypted messages and codes.",
-        "Liar": "Gives a +1 bonus to any PERSUASION roll when lying to someone.",
-        "Thief": "Gives a +1 bonus to RECON rolls when picking pockets and TECH rolls when picking locks."
+        "Brawler": "+1 modifier to CLOSE COMBAT rolls in unarmed close combat.", "Melee": "+1 modifier to CLOSE COMBAT rolls for all hand-to-hand combat weapons, such as knives, bayonets, and clubs.", "Killer": "You can kill an incapacitated person outright without suffering any negative effects.", "Martial Artist": "Unarmed close combat attacks have a crit threshold of 3 instead of 4.", "Machinegunner": "+1 modifier to HEAVY WEAPONS rolls for firing all types of machine guns.", "Launcher Crew": "+1 modifier to HEAVY WEAPONS rolls for firing grenade launchers and missile launchers.", "Redleg": "+1 modifier to HEAVY WEAPONS rolls when firing mortars and howitzers.", "Vehicle Gunner": "+1 modifier to HEAVY WEAPONS rolls when firing vehicle-mounted cannons.", "Builder": "+1 modifier to STAMINA rolls made for base building.", "Load Carrier": "You can carry four additional encumbrance units in your combat gear and four more in your backpack.", "NBC": "+1 modifier to STAMINA for all infection rolls, even those triggered by radiation or chemical agents. Also lets you identify nuclear, biological, and chemical weapon effects to personnel and equipment.", "Ranger": "+1 modifier to STAMINA rolls made for marching, resisting hypothermia, and other hardships.", "SERE Training": "+1 modifier to STAMINA rolls made to resist interrogation, Psy Ops, bluffing, and torture effects.", "Biker": "+1 modifier to DRIVING all motorcycles and bicycles, on or off-road.", "Boatman": "+1 modifier to DRIVING rolls for piloting boats, including sail and rowed boats.", "Pilot": "+1 modifier to DRIVING rolls for flying fixed-and rotary-wing aircraft.", "Racer": "+1 modifier to DRIVING all wheeled vehicles except motorcycles.", "Tanker": "+1 modifier to DRIVING all tracked vehicles.", "Diver": "+1 bonus to MOBILITY rolls when swimming, both across the surface and under it. Includes use of SCUBA gear.", "Mountaineer": "+1 bonus to MOBILITY rolls for rappelling, ascender-climbing, and knot-tying.", "Paratrooper": "+1 bonus to MOBILITY rolls for skydiving, as well as for reducing damage from falling.", "Pitcher": "+1 modifier to MOBILITY rolls for thrown weapons, including knives and grenades.", "Rider": "+1 bonus to MOBILITY rolls for riding fast and performing maneuvers on horseback. Also negates the negative modifier for shooting from horseback.", "Runner": "+1 bonus to MOBILITY rolls for running.", "Archer": "+1 modifier to RANGED COMBAT rolls for bows and crossbows.", "Reloader": "+1 modifier to RANGED COMBAT rolls made to reload your firearm.", "Rifleman": "+1 modifier to RANGED COMBAT rolls for firing assault rifles, carbines, submachine guns, and shotguns.", "Sidearms": "+1 modifier to RANGED COMBAT rolls for firing revolvers and pistols.", "Sniper": "+1 modifier to RANGED COMBAT rolls for firing sniper rifles and hunting rifles.", "Combat Awareness": "When drawing initiative, you may draw two cards instead of one and choose which one to act on.", "Forward Observer": "+1 bonus to RECON rolls when directing indirect fire.", "Historian": "Roll RECON when you arrive at a new location. If you succeed, the Referee can tell you something significant that has happened here in the past.", "Infiltrator": "+1 modifier to RECON rolls when trying to remain undetected.", "Intelligence": "Roll RECON when you spot enemy troops, vehicles, and weapons. If you succeed, the Referee should tell you their stats.", "Investigator": "Roll RECON when you spend a stretch or more investigating the scene of a crime or a battle. If you succeed, the Referee should give you some useful information.", "Scout": "+1 modifier to RECON rolls for spotting others and avoiding ambushes.", "Cook": "Gives you one additional ration of food when you or someone else in your group successfully forages, hunts or fishes.", "Farmer": "+1 modifier to SURVIVAL rolls for farming.", "Fisher": "+1 modifier to SURVIVAL rolls for fishing.", "Forager": "+1 modifier to SURVIVAL rolls for foraging to find food.", "Navigator": "+1 modifier when using SURVIVAL rolls for navigation.", "Hunter": "+1 modifier to SURVIVAL rolls for hunting to obtain food.", "Quartermaster": "+1 modifier to SURVIVAL rolls for making camp and establishing a home base.", "Scrounger": "+1 modifier to SURVIVAL rolls for scrounging.", "Blacksmith": "+1 modifier to TECH rolls for metalworking, forging, casting, molding, and smelting.", "Chemist": "+1 modifier to TECH rolls for distilling grain alcohol for fuel. Also lets you identify chemical substances correctly.", "Combat Engineer": "+1 modifier to TECH rolls for placing and disarming mines and explosive devices, and to RECON rolls to avoid mines.", "Communications": "+1 modifier to TECH rolls for maintaining contact on radios, boosting a signal, using Morse code, setting up antennae, and using encryption equipment.", "Computers": "+1 modifier to TECH rolls for using or tampering with computers and ancillary devices.", "Electrician": "+1 modifier to TECH rolls for wiring, soldering, disabling, and repairing electrical devices.", "Gunsmith": "+1 modifier to TECH rolls for repairing firearms.", "Improvised Munitions": "+1 modifier to TECH rolls for making zip-guns and IEDs.", "Locksmith": "+1 modifier to TECH rolls for picking locks, cracking safes, and disarming alarms.", "Mechanic": "+1 modifier to TECH rolls for repairing engines, vehicles, generators, and pumps.", "Scientist": "Roll TECH when you come across a phenomenon of any sort that requires knowledge of physics, biology, geology, or any other natural science. If you succeed, the Referee must give you some useful information about it.", "Frontline Leader": "+1 bonus to COMMAND rolls for helping someone who is incapacitated by stress. Does not affect unit morale.", "Logistician": "When building a base, you can roll COMMAND instead of any listed skill, but only if you have help by at least one person.", "Tactician": "Roll COMMAND when you spot an enemy force. If you succeed, the Referee must tell you something useful about their current organization and objectives.", "Combat Medic": "+1 modifier to MEDICAL AID rolls for helping an incapacitated character get back up. No effect on treating critical injuries.", "Counselor": "+1 modifier to MEDICAL AID rolls for counseling a person suffering from long-term mental trauma.", "Field Surgeon": "+1 modifier to MEDICAL AID rolls for treating critical injuries.", "General Practitioner": "+1 modifier to MEDICAL AID rolls for treating disease, poison, and NBC.", "Veterinarian": "+1 modifier to MEDICAL AID rolls for working on animals.", "Linguist": "You know another language of your choice, well enough to be taken as native on a successful PERSUASION roll.", "Musician": "+1 bonus to PERSUASION rolls in situations where singing or playing an instrument is helpful. The Referee has final say.", "Interrogator": "+1 bonus to PERSUASION rolls for extracting information from a prisoner.", "Psy Ops": "+1 bonus to PERSUASION rolls for changing someone's mind about a particular issue.", "Teacher": "+1 bonus to PERSUASION rolls for teaching someone a specialty.", "Trader": "+1 bonus to PERSUASION rolls when negotiating the price of an item.", "Authority": "You can roll COMMAND to calm down a rowdy crowd. This specialty cannot be used on hostile enemies.", "Close Quarters Specialist": "The penalty for shooting in close combat is reduced one step.", "Cryptographer": "+1 bonus to any TECH roll involving breaking or creating encrypted messages and codes.", "Liar": "+1 bonus to any PERSUASION roll when lying to someone.", "Thief": "+1 bonus to RECON rolls when picking pockets and TECH rolls when picking locks."
     },
     ATTRIBUTE_DICE: { A: 'D12', B: 'D10', C: 'D8', D: 'D6' },
     DIE_SIZES: { D12: 12, D10: 10, D8: 8, D6: 6 },
@@ -112,93 +108,6 @@ const rollCheck = (attrDie, skillDie) => {
     };
 };
 const getDie = (level) => level ? gameData.ATTRIBUTE_DICE[level] : null;
-
-const generateCharacterSheetText = (character) => {
-    let text = `TWILIGHT:2000 CHARACTER SHEET\n`;
-    text += `===================================\n\n`;
-    text += `Name: ${character.name}\n`;
-    text += `Nationality: ${character.nationality}\n`;
-    text += `Age: ${character.age}\n\n`;
-
-    text += `--- COMBAT STATS ---\n`;
-    text += `Hit Capacity: ${character.hitCapacity}\n`;
-    text += `Stress Capacity: ${character.stressCapacity}\n`;
-    text += `Coolness Under Fire (CUF): ${character.cuf}\n`;
-    if (character.rank) text += `Rank: ${character.rank}\n`;
-    text += `Permanent Rads: ${character.rads}\n\n`;
-
-    text += `--- ATTRIBUTES & SKILLS ---\n`;
-    const columnWidth = 40;
-    const attrPairs = [['str', 'agl'], ['int', 'emp']];
-
-    attrPairs.forEach(pair => {
-        const [leftAttrKey, rightAttrKey] = pair;
-        
-        const leftLines = [];
-        const rightLines = [];
-
-        leftLines.push(`${leftAttrKey.toUpperCase()}: ${character.attributes[leftAttrKey]} (${gameData.ATTRIBUTE_DICE[character.attributes[leftAttrKey]]})`);
-        Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === leftAttrKey).forEach(([skillName, _]) => {
-            const skillLevel = character.skills[skillName] || '-';
-            const skillDie = skillLevel !== '-' ? ` (${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
-            leftLines.push(`  ${skillName}: ${skillLevel}${skillDie}`);
-        });
-
-        if (rightAttrKey) {
-            rightLines.push(`${rightAttrKey.toUpperCase()}: ${character.attributes[rightAttrKey]} (${gameData.ATTRIBUTE_DICE[character.attributes[rightAttrKey]]})`);
-            Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === rightAttrKey).forEach(([skillName, _]) => {
-                const skillLevel = character.skills[skillName] || '-';
-                const skillDie = skillLevel !== '-' ? ` (${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
-                rightLines.push(`  ${skillName}: ${skillLevel}${skillDie}`);
-            });
-        }
-
-        const maxLines = Math.max(leftLines.length, rightLines.length);
-        for (let i = 0; i < maxLines; i++) {
-            const leftLine = leftLines[i] || '';
-            const rightLine = rightLines[i] || '';
-            text += `${leftLine.padEnd(columnWidth)}${rightLine}\n`;
-        }
-        text += `\n`;
-    });
-
-    text += `--- SPECIALTIES ---\n`;
-    const specialtiesString = character.specialties.join(', ');
-    const maxLineWidth = columnWidth * 2;
-    let currentLine = '';
-    const words = specialtiesString.split(' ');
-    for (const word of words) {
-        if ((currentLine + word).length > maxLineWidth) {
-            text += `${currentLine.trim()}\n`;
-            currentLine = '';
-        }
-        currentLine += `${word} `;
-    }
-    text += `${currentLine.trim()}\n\n`;
-
-
-    text += `--- GEAR ---\n`;
-    character.gear.forEach(item => text += `- ${item}\n`);
-    text += `- D6 rations of food, D6 rations of water, D6 rounds of ammo\n\n`;
-
-    text += `--- CAREER PATH ---\n`;
-    character.careerPath.forEach((term, i) => {
-        let label = `Term ${i}`;
-        if (term.career.type === 'Childhood') label = 'Childhood';
-        else if (term.career.name === 'At War') label = 'At War';
-        
-        let careerName = term.career.name;
-        if (term.career.name === 'Officer' && term.functionalArea) {
-            careerName = `Officer [${term.functionalArea}]`;
-        } else if (term.career.name === 'At War') {
-             careerName = '';
-        }
-
-        text += `${label}: ${careerName ? `${careerName} ` : ''}(${term.skillsIncreased.join(', ')}) ${term.specialtyGained ? `-> ${term.specialtyGained}` : ''}\n`;
-    });
-
-    return text;
-};
 
 
 const initialCharacter = {
@@ -1036,17 +945,173 @@ const Step5_Finalize = ({ character, setCharacter, nextStep }) => {
 };
 
 const CharacterSheet = ({ character, startOver }) => {
-    const handleSave = () => {
-        const textContent = generateCharacterSheetText(character);
-        const blob = new Blob([textContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `T2K4E - ${character.name.replace(/\s/g, '_') || 'character'}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const handleSaveAsPdf = () => {
+        const doc = new jsPDF();
+
+        // --- PDF STYLING AND LAYOUT CONSTANTS ---
+        const pageW = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const contentW = pageW - margin * 2;
+        const lineHeight = 5;
+        let y = 10;
+
+        // --- DOCUMENT HEADER ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text(character.name.toUpperCase(), pageW / 2, y, { align: 'center' });
+        y += lineHeight * 1.5;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        const subheader = `${character.nationality} | Age: ${character.age}`;
+        doc.text(subheader, pageW / 2, y, { align: 'center' });
+        y += lineHeight * 3;
+
+        // --- DEFINE COLUMNS ---
+        const col1X = margin;
+        const col2X = pageW / 2;
+        let y1 = y;
+        let y2 = y;
+
+        // --- LEFT COLUMN: ATTRIBUTES & SKILLS ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('ATTRIBUTES & SKILLS', col1X, y1);
+        y1 += lineHeight * 2;
+        
+        const attrSubCol1 = col1X;
+        const attrSubCol2 = col1X + 45;
+        
+        const renderAttributeBlock = (attrKey, x, startY) => {
+            let currentY = startY;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(`${attrKey.toUpperCase()}: ${character.attributes[attrKey]} (${gameData.ATTRIBUTE_DICE[character.attributes[attrKey]]})`, x, currentY);
+            currentY += lineHeight;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === attrKey);
+            skillsForAttr.forEach(([skillName, _]) => {
+                const skillLevel = character.skills[skillName] || '-';
+                const skillDie = skillLevel !== '-' ? `(${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
+                doc.text(`${skillName}: ${skillLevel} ${skillDie}`, x + 2, currentY);
+                currentY += lineHeight;
+            });
+            return currentY;
+        };
+
+        const yStrEnd = renderAttributeBlock('str', attrSubCol1, y1);
+        const yAglEnd = renderAttributeBlock('agl', attrSubCol2, y1);
+        
+        const nextRowY = Math.max(yStrEnd, yAglEnd) + lineHeight;
+
+        const yIntEnd = renderAttributeBlock('int', attrSubCol1, nextRowY);
+        const yEmpEnd = renderAttributeBlock('emp', attrSubCol2, nextRowY);
+
+        y1 = Math.max(yIntEnd, yEmpEnd);
+        
+        // --- RIGHT COLUMN: COMBAT STATS ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('COMBAT STATS', col2X, y2);
+        y2 += lineHeight * 2;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        
+        let textX = col2X;
+        doc.text(`Hit Capacity: ${character.hitCapacity}`, textX, y2);
+        let textWidth = doc.getStringUnitWidth(`Hit Capacity: ${character.hitCapacity}`) * 10 / doc.internal.scaleFactor;
+        let boxX = textX + textWidth + 2;
+        for(let i=0; i<character.hitCapacity; i++) {
+            doc.rect(boxX + (i*4), y2 - 3, 3, 3);
+        }
+        y2 += lineHeight * 1.5;
+
+        doc.text(`Stress Capacity: ${character.stressCapacity}`, textX, y2);
+        textWidth = doc.getStringUnitWidth(`Stress Capacity: ${character.stressCapacity}`) * 10 / doc.internal.scaleFactor;
+        boxX = textX + textWidth + 2;
+        for(let i=0; i<character.stressCapacity; i++) {
+            doc.rect(boxX + (i*4), y2 - 3, 3, 3);
+        }
+        y2 += lineHeight * 1.5;
+
+        doc.text(`Coolness Under Fire (CUF): ${character.cuf}`, col2X, y2);
+        y2 += lineHeight * 1.5;
+        if (character.rank) {
+            doc.text(`Rank: ${character.rank}`, col2X, y2);
+            y2 += lineHeight * 1.5;
+        }
+        doc.text(`Permanent Rads: ${character.rads}`, col2X, y2);
+
+        // --- MOVE Y TO THE BOTTOM OF THE LONGEST COLUMN ---
+        y = Math.max(y1, y2) + lineHeight * 2;
+
+        // --- FULL-WIDTH SECTIONS ---
+        const addSectionHeader = (title) => {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(title, margin, y);
+            y += lineHeight * 2;
+        };
+
+        // --- SPECIALTIES ---
+        addSectionHeader('SPECIALTIES');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        character.specialties.forEach(spec => {
+            const coreSpec = spec.split(' (')[0];
+            const description = gameData.SPECIALTY_DESCRIPTIONS[coreSpec] || '';
+            
+            doc.setFont('helvetica', 'bold');
+            const specNameWidth = doc.getStringUnitWidth(spec + ':') * 9 / doc.internal.scaleFactor;
+            doc.text(spec + ':', margin, y);
+            
+            doc.setFont('helvetica', 'normal');
+            const descLines = doc.splitTextToSize(description, contentW - specNameWidth - 2);
+            doc.text(descLines, margin + specNameWidth + 2, y);
+            y += (lineHeight * descLines.length) + 2; // Tighter spacing
+        });
+        y += lineHeight;
+
+        // --- GEAR ---
+        addSectionHeader('GEAR');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        const allGear = [...character.gear, 'D6 rations of food, D6 rations of water, D6 rounds of ammo'];
+        allGear.forEach(item => {
+            doc.text(`- ${item}`, margin, y);
+            y += lineHeight;
+        });
+        y += lineHeight;
+
+        // --- CAREER PATH ---
+        addSectionHeader('CAREER PATH');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        character.careerPath.forEach((term, i) => {
+            let label = `Term ${i}`;
+            if (term.career.type === 'Childhood') {
+                label = 'Childhood';
+            } else if (term.career.name === 'At War') {
+                label = 'At War';
+            }
+            
+            let careerName = term.career.name;
+            if (term.career.name === 'Officer' && term.functionalArea) {
+                careerName = `Officer [${term.functionalArea}]`;
+            } else if (term.career.name === 'At War') {
+                 careerName = '';
+            }
+
+            const line = `- ${label}: ${careerName ? `${careerName} ` : ''}(${term.skillsIncreased.join(', ')}) ${term.specialtyGained && `-> ${term.specialtyGained}`}`;
+            doc.text(line, margin, y);
+            y += lineHeight;
+        });
+
+        // --- SAVE THE PDF ---
+        doc.save(`T2K4E - ${character.name.replace(/\s/g, '_') || 'character'}.pdf`);
     };
 
     return (
@@ -1091,13 +1156,17 @@ const CharacterSheet = ({ character, startOver }) => {
 
             <div className="mb-6">
                 <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">SPECIALTIES</h3>
-                <p>
-                    {character.specialties.map((spec, index) => (
-                        <span key={index} title={gameData.SPECIALTY_DESCRIPTIONS[spec.split(' (')[0]]}>
-                            {spec}{index < character.specialties.length - 1 ? ', ' : ''}
-                        </span>
-                    ))}
-                </p>
+                <ul className="space-y-2 text-sm">
+                    {character.specialties.map((spec, index) => {
+                        const coreSpec = spec.split(' (')[0];
+                        const description = gameData.SPECIALTY_DESCRIPTIONS[coreSpec];
+                        return (
+                            <li key={index}>
+                                <strong className="text-yellow-400 font-bold">{spec}:</strong> {description}
+                            </li>
+                        );
+                    })}
+                </ul>
             </div>
             
             <div className="mb-6">
@@ -1136,7 +1205,7 @@ const CharacterSheet = ({ character, startOver }) => {
             </div>
             
             <div className="flex space-x-4 mt-6">
-                <Button onClick={handleSave} className="w-full bg-green-700 hover:bg-green-800">Save to File</Button>
+                <Button onClick={handleSaveAsPdf} className="w-full bg-green-700 hover:bg-green-800">Save as PDF</Button>
                 <Button onClick={startOver} className="w-full">Create Another Character</Button>
             </div>
         </Card>
@@ -1150,6 +1219,7 @@ export default function App() {
     const [attributeIncreases, setAttributeIncreases] = useState({ rolls: [], total: 0 });
     const [warBrokeOut, setWarBrokeOut] = useState(false);
 
+    // Set initial attribute dice roll
     useEffect(() => {
         setAttributeIncreases(twoD3());
     }, []);
