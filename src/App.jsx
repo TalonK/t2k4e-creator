@@ -401,12 +401,20 @@ const Step2_Childhood = memo(({ character, setCharacter, nextStep }) => {
     const [specialty, setSpecialty] = useState('');
     const [language, setLanguage] = useState('');
 
+    const isSpecialtyValid = useMemo(() => {
+        if (!specialty) return false;
+        if (specialty !== 'Linguist') return true;
+        if (!language) return false;
+        const finalSpecialty = `Linguist (${language.trim()})`;
+        return !character.specialties.includes(finalSpecialty);
+    }, [specialty, language, character.specialties]);
+
     const handleNext = () => {
-        const finalSpecialty = specialty === 'Linguist' ? `Linguist (${language})` : specialty;
+        const finalSpecialty = specialty === 'Linguist' ? `Linguist (${language.trim()})` : specialty;
         setCharacter(prev => ({
             ...prev,
             skills: { ...prev.skills, [skill]: 'D' },
-            specialties: [...prev.specialties, finalSpecialty],
+            specialties: [...prev.specialties, finalSpecialty].sort(),
             careerPath: [...prev.careerPath, { career: {name: childhood, type: 'Childhood'}, skillsIncreased: [skill], specialtyGained: finalSpecialty }]
         }));
         nextStep();
@@ -439,8 +447,13 @@ const Step2_Childhood = memo(({ character, setCharacter, nextStep }) => {
                 <Select value={childhood} onChange={e => { setChildhood(e.target.value); setSkill(''); setSpecialty(''); }} options={Object.keys(gameData.CHILDHOODS)} placeholder="Select Childhood" descriptions={Object.fromEntries(Object.entries(gameData.CHILDHOODS).map(([name, data]) => [name, `Skills: ${data.skills.join(', ')}`]))} />
                 {childhood && <Select value={skill} onChange={e => setSkill(e.target.value)} options={skillOptions} placeholder="Select Skill (gets level D)" descriptions={gameData.SKILL_DESCRIPTIONS} />}
                 {skill && <Select value={specialty} onChange={e => setSpecialty(e.target.value)} options={availableSpecialties} placeholder="Select Specialty" descriptions={gameData.SPECIALTY_DESCRIPTIONS} />}
-                {specialty === 'Linguist' && <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />}
-                <Button onClick={handleNext} disabled={!childhood || !skill || !specialty || (specialty === 'Linguist' && !language)}>Continue to First Career</Button>
+                {specialty === 'Linguist' && (
+                    <>
+                        <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />
+                        {!isSpecialtyValid && language && <p className="text-red-500 text-sm">You already know this language.</p>}
+                    </>
+                )}
+                <Button onClick={handleNext} disabled={!childhood || !skill || !specialty || !isSpecialtyValid}>Continue to First Career</Button>
             </div>
         </Card>
     );
@@ -462,6 +475,14 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
     const [isDuplicateSpecialty, setIsDuplicateSpecialty] = useState(false);
 
     // --- COMPUTED VALUES (MEMOS) ---
+    const isPromotionSpecialtyValid = useMemo(() => {
+        if (!promotionSpecialty) return false;
+        if (promotionSpecialty !== 'Linguist') return true;
+        if (!language) return false;
+        const finalSpecialty = `Linguist (${language.trim()})`;
+        return !character.specialties.includes(finalSpecialty);
+    }, [promotionSpecialty, language, character.specialties]);
+
     const availableCareers = useMemo(() => {
         const careers = Object.entries(gameData.CAREERS_DATA)
             .filter(([key]) => {
@@ -616,7 +637,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
     const finalizeTerm = (agingChoice = null) => {
         let newCuf = character.cuf;
         let newRank = character.rank;
-        const finalSpecialty = promotionSpecialty === 'Linguist' ? `Linguist (${language})` : promotionSpecialty;
+        const finalSpecialty = promotionSpecialty === 'Linguist' ? `Linguist (${language.trim()})` : promotionSpecialty;
 
         if (promotionResult.success) {
             if (selectedCareerData.type === 'military' || selectedCareerData.group === 'Intelligence') {
@@ -647,7 +668,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         
         const updatedCharacter = {
             ...character, age: newAge, cuf: newCuf, rank: newRank, skills: newSkills, attributes: newAttributes,
-            specialties: promotionSpecialty ? [...character.specialties, finalSpecialty] : character.specialties,
+            specialties: promotionSpecialty ? [...character.specialties, finalSpecialty].sort() : character.specialties,
             careerPath: [...character.careerPath, { career: selectedCareerData, skillsIncreased: skillIncreases, promotion: promotionResult.success, specialtyGained: finalSpecialty, ageIncrease, functionalArea: officerFunctionalArea ? gameData.CAREERS_DATA[officerFunctionalArea].name : null }],
             termsCompleted: character.termsCompleted + 1, finalCareer: selectedCareerData
         };
@@ -748,7 +769,10 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
             const specialtyRoll = d6();
             const rolledSpecialty = specialtyList[specialtyRoll - 1];
             
-            if (character.specialties.some(s => s.startsWith(rolledSpecialty))) {
+            // BUG FIX: Correctly handle Linguist specialty rolls
+            if (rolledSpecialty === 'Linguist') {
+                setPromotionSpecialty('Linguist');
+            } else if (character.specialties.includes(rolledSpecialty)) {
                 setIsDuplicateSpecialty(true);
             } else {
                 setPromotionSpecialty(rolledSpecialty);
@@ -863,10 +887,15 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
                                         ) : (
                                             <p>You gained the <span className="font-bold text-yellow-400" title={gameData.SPECIALTY_DESCRIPTIONS[promotionSpecialty]}>{promotionSpecialty}</span> specialty.</p>
                                         )}
-                                        {promotionSpecialty === 'Linguist' && <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />}
+                                        {promotionSpecialty === 'Linguist' && (
+                                            <>
+                                                <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />
+                                                {!isPromotionSpecialtyValid && language && <p className="text-red-500 text-sm">You already know this language.</p>}
+                                            </>
+                                        )}
                                     </div>
                                 )}
-                                <Button onClick={finishTerm} className="mt-4" disabled={promotionResult.success && (!promotionSpecialty || (promotionSpecialty === 'Linguist' && !language))}>Finish Term</Button>
+                                <Button onClick={finishTerm} className="mt-4" disabled={promotionResult.success && !isPromotionSpecialtyValid}>Finish Term</Button>
                             </div>
                         )}
                     </div>
@@ -886,6 +915,14 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
     const isDraftee = useMemo(() => {
         return character.finalCareer?.type === 'civilian' && character.finalCareer?.group !== 'Intelligence' && !character.isLocal;
     }, [character]);
+
+    const isFinalSpecialtyValid = useMemo(() => {
+        if (!specialty) return false;
+        if (specialty !== 'Linguist') return true;
+        if (!language) return false;
+        const finalSpecialty = `Linguist (${language.trim()})`;
+        return !character.specialties.includes(finalSpecialty);
+    }, [specialty, language, character.specialties]);
     
     const needsRangedCombat = isDraftee && !character.skills['Ranged Combat'];
     
@@ -935,12 +972,12 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
             else if (currentLevel > 'A') newSkills[skill] = String.fromCharCode(currentLevel.charCodeAt(0) - 1);
         });
         
-        const finalSpecialty = specialty === 'Linguist' ? `Linguist (${language})` : specialty;
+        const finalSpecialty = specialty === 'Linguist' ? `Linguist (${language.trim()})` : specialty;
 
         setCharacter(prev => ({
             ...prev,
             skills: newSkills,
-            specialties: [...prev.specialties, finalSpecialty],
+            specialties: [...prev.specialties, finalSpecialty].sort(),
             careerPath: [...prev.careerPath, { career: {name: 'At War', type: 'military'}, skillsIncreased: skillIncreases, specialtyGained: finalSpecialty }],
         }));
         nextStep();
@@ -999,10 +1036,15 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
                     {skillIncreases.length === 2 && (
                         <>
                         <Select value={specialty} onChange={e => setSpecialty(e.target.value)} options={atWarSpecialtyOptions} placeholder="Select Final Specialty" descriptions={gameData.SPECIALTY_DESCRIPTIONS} />
-                        {specialty === 'Linguist' && <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />}
+                        {specialty === 'Linguist' && (
+                            <>
+                                <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />
+                                {!isFinalSpecialtyValid && language && <p className="text-red-500 text-sm">You already know this language.</p>}
+                            </>
+                        )}
                         </>
                     )}
-                    <Button onClick={handleNext} disabled={skillIncreases.length < 2 || !specialty || (specialty === 'Linguist' && !language)}>Continue to Character Sheet</Button>
+                    <Button onClick={handleNext} disabled={skillIncreases.length < 2 || !isFinalSpecialtyValid}>Continue to Character Sheet</Button>
                 </div>
             </Card>
             <CharacterStatus character={character} skillPreview={skillPreview} />
@@ -1212,7 +1254,8 @@ const CharacterSheet = memo(({ character, startOver }) => {
                      careerName = '';
                 }
                 
-                const details = `${careerName ? `${careerName} ` : ''}(${term.skillsIncreased.join(', ')}) ${term.specialtyGained ? `-> ${term.specialtyGained}` : ''}`;
+                const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
+                const details = `${careerName ? `${careerName} ` : ''}(${cleanedSkills.join(', ')}) ${term.specialtyGained ? `-> ${term.specialtyGained}` : ''}`;
                 
                 const labelText = `${label}:`;
                 doc.setFont("helvetica", "bold");
@@ -1307,9 +1350,11 @@ const CharacterSheet = memo(({ character, startOver }) => {
                                  careerName = '';
                             }
 
+                            const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
+
                             return (
                                 <li key={i}>
-                                    <strong>{label}:</strong> {careerName ? `${careerName} ` : ''}({term.skillsIncreased.join(', ')}) {term.specialtyGained && `-> ${term.specialtyGained}`}
+                                    <strong>{label}:</strong> {careerName ? `${careerName} ` : ''}({cleanedSkills.join(', ')}) {term.specialtyGained && `-> ${term.specialtyGained}`}
                                 </li>
                             )
                         })}
