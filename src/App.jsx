@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { jsPDF } from "jspdf";
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 
 // ===================================================================================
 // --- GAME DATA ---
-// All static data from the rulebook is centralized here for easy maintenance.
-// In a larger project, this would be in its own file (e.g., `gameData.js`).
+// All static data from the rulebook is centralized here.
 // ===================================================================================
 
 const gameData = {
@@ -157,7 +155,6 @@ const gameData = {
 
 // ===================================================================================
 // --- HELPER FUNCTIONS ---
-// Small, reusable functions for dice rolling and calculations.
 // ===================================================================================
 
 const d6 = () => Math.floor(Math.random() * 6) + 1;
@@ -193,18 +190,31 @@ const initialCharacter = {
 };
 
 // ===================================================================================
-// --- UI COMPONENTS ---
-// Reusable presentational components.
-// In a larger project, these would be in their own files (e.g., `components/UI.js`).
+// --- STATIC & UI COMPONENTS (MEMOIZED) ---
 // ===================================================================================
 
-const Card = ({ children, className = '' }) => (
+// Optimization: Hoist static JSX element outside the component to prevent recreation on re-renders.
+const GlobalStyles = (
+    <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Roboto+Mono&family=Stardos+Stencil:wght@700&display=swap');
+        
+        .font-header { font-family: 'Stardos Stencil', cursive; }
+        .font-display { font-family: 'Chakra Petch', sans-serif; }
+        .font-body { font-family: 'Roboto Mono', monospace; }
+
+        body {
+            background-color: #000000;
+        }
+    `}</style>
+);
+
+const Card = memo(({ children, className = '' }) => (
     <div className={`bg-black/50 border border-zinc-700 p-6 shadow-lg backdrop-blur-sm ${className}`}>
         {children}
     </div>
-);
+));
 
-const Button = ({ onClick, children, disabled = false, className = '', title = '' }) => (
+const Button = memo(({ onClick, children, disabled = false, className = '', title = '' }) => (
     <button
         onClick={onClick}
         disabled={disabled}
@@ -215,9 +225,9 @@ const Button = ({ onClick, children, disabled = false, className = '', title = '
     >
         {children}
     </button>
-);
+));
 
-const Input = ({ value, onChange, placeholder, className = '' }) => (
+const Input = memo(({ value, onChange, placeholder, className = '' }) => (
     <input
         type="text"
         value={value}
@@ -225,9 +235,9 @@ const Input = ({ value, onChange, placeholder, className = '' }) => (
         placeholder={placeholder}
         className={`w-full bg-zinc-700 border border-zinc-600 p-2 text-yellow-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 ${className}`}
     />
-);
+));
 
-const Select = ({ value, onChange, options, placeholder, disabled = false, descriptions = {} }) => (
+const Select = memo(({ value, onChange, options, placeholder, disabled = false, descriptions = {} }) => (
     <select
         value={value}
         onChange={onChange}
@@ -245,13 +255,9 @@ const Select = ({ value, onChange, options, placeholder, disabled = false, descr
             );
         })}
     </select>
-);
+));
 
-// ===================================================================================
-// --- LAYOUT COMPONENTS ---
-// ===================================================================================
-
-const CharacterStatus = ({ character, skillPreview }) => (
+const CharacterStatus = memo(({ character, skillPreview }) => (
     <Card className="mb-6">
         <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">CHARACTER STATUS</h3>
         <div className="space-y-4">
@@ -297,49 +303,69 @@ const CharacterStatus = ({ character, skillPreview }) => (
             </div>
         </div>
     </Card>
-);
-
+));
 
 // ===================================================================================
-// --- STEP COMPONENTS ---
-// Each component represents a step in the character creation process.
+// --- STEP COMPONENT DEFINITIONS ---
+// These are the full components that will be lazy-loaded.
 // ===================================================================================
 
-const Step1_InitialSetup = ({ character, setCharacter, setAttributeIncreases, attributeIncreases, nextStep }) => {
+const Step1_InitialSetup = memo(({ character, setCharacter, nextStep }) => {
+    // Optimization: State colocation. Keep form state local to this component.
+    const [localName, setLocalName] = useState(character.name);
+    const [localNationality, setLocalNationality] = useState(character.nationality);
+    const [localIsLocal, setLocalIsLocal] = useState(character.isLocal);
+    const [localAttributes, setLocalAttributes] = useState(character.attributes);
+    const [attributeIncreases, setAttributeIncreases] = useState({ rolls: [], total: 0 });
+
+    useEffect(() => {
+        setAttributeIncreases(twoD3());
+    }, []);
+
     const handleAttrChange = (attr, direction) => {
-        const currentVal = character.attributes[attr].charCodeAt(0);
+        const currentVal = localAttributes[attr].charCodeAt(0);
         let newVal;
 
         if (direction === 'increase') {
-            if (character.attributes[attr] === 'A' || attributeIncreases.total <= 0) return;
+            if (localAttributes[attr] === 'A' || attributeIncreases.total <= 0) return;
             newVal = String.fromCharCode(currentVal - 1);
             setAttributeIncreases(prev => ({ ...prev, total: prev.total - 1 }));
         } else { // 'decrease'
-            if (character.attributes[attr] === 'D') return;
+            if (localAttributes[attr] === 'D') return;
             newVal = String.fromCharCode(currentVal + 1);
             setAttributeIncreases(prev => ({ ...prev, total: prev.total + 1 }));
         }
-
-        setCharacter(prev => ({ ...prev, attributes: { ...prev.attributes, [attr]: newVal } }));
+        setLocalAttributes(prev => ({ ...prev, [attr]: newVal }));
     };
 
     const tradeForIncrease = () => {
-        if (Object.values(character.attributes).includes('D')) return;
-        
-        const cAttribute = Object.keys(character.attributes).find(key => character.attributes[key] === 'C');
+        if (Object.values(localAttributes).includes('D')) return;
+        const cAttribute = Object.keys(localAttributes).find(key => localAttributes[key] === 'C');
         if (cAttribute) {
             handleAttrChange(cAttribute, 'decrease');
         }
+    };
+
+    const handleContinue = () => {
+        // Update the parent state only once on submission
+        setCharacter(prev => ({
+            ...prev,
+            name: localName,
+            nationality: localNationality,
+            isLocal: localIsLocal,
+            attributes: localAttributes
+        }));
+        nextStep();
     };
 
     return (
         <Card>
             <h2 className="text-2xl font-display text-yellow-400 mb-4">Step 1: Initial Setup</h2>
             <div className="space-y-4">
-                <Input value={character.name} onChange={(e) => setCharacter(p => ({ ...p, name: e.target.value }))} placeholder="Character Name" />
-                <Input value={character.nationality} onChange={(e) => setCharacter(p => ({ ...p, nationality: e.target.value }))} placeholder="Nationality" />
+                <Input value={localName} onChange={(e) => setLocalName(e.target.value)} placeholder="Character Name" />
+                <Input value={localNationality} onChange={(e) => setLocalNationality(e.target.value)} placeholder="Nationality" />
                 <label className="flex items-center space-x-2">
-                    <input type="checkbox" checked={character.isLocal} onChange={e => setCharacter(p => ({ ...p, isLocal: e.target.checked }))} className="form-checkbox h-5 w-5 text-yellow-600 bg-zinc-900 border-zinc-600 rounded-none focus:ring-yellow-500"/>
+                    <input type="checkbox" checked={localIsLocal} onChange={e => setLocalIsLocal(e.target.checked)} className="form-checkbox h-5 w-5 text-yellow-600 bg-zinc-900 border-zinc-600 rounded-none focus:ring-yellow-500"/>
                     <span>Is your character a local in the game setting (e.g., Polish in Poland)?</span>
                 </label>
                 <div>
@@ -349,7 +375,7 @@ const Step1_InitialSetup = ({ character, setCharacter, setAttributeIncreases, at
                         (Rolled 2D3: {attributeIncreases.rolls[0]} + {attributeIncreases.rolls[1]})
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {Object.entries(character.attributes).map(([attr, val]) => (
+                        {Object.entries(localAttributes).map(([attr, val]) => (
                             <div key={attr} className="bg-zinc-700/50 p-3 text-center">
                                 <p className="font-bold uppercase font-display">{attr}</p>
                                 <p className="text-3xl text-yellow-400 my-2">{val}</p>
@@ -360,15 +386,15 @@ const Step1_InitialSetup = ({ character, setCharacter, setAttributeIncreases, at
                             </div>
                         ))}
                     </div>
-                    <Button onClick={tradeForIncrease} disabled={Object.values(character.attributes).includes('D')} className="mt-4 w-full bg-zinc-600 hover:bg-zinc-700">Decrease one 'C' to 'D' for 1 extra increase</Button>
+                    <Button onClick={tradeForIncrease} disabled={Object.values(localAttributes).includes('D')} className="mt-4 w-full bg-zinc-600 hover:bg-zinc-700">Decrease one 'C' to 'D' for 1 extra increase</Button>
                 </div>
-                <Button onClick={nextStep} disabled={!character.name || !character.nationality || attributeIncreases.total > 0}>Continue to Childhood</Button>
+                <Button onClick={handleContinue} disabled={!localName || !localNationality || attributeIncreases.total > 0}>Continue to Childhood</Button>
             </div>
         </Card>
     );
-};
+});
 
-const Step2_Childhood = ({ character, setCharacter, nextStep }) => {
+const Step2_Childhood = memo(({ character, setCharacter, nextStep }) => {
     const [childhood, setChildhood] = useState('');
     const [skill, setSkill] = useState('');
     const [specialty, setSpecialty] = useState('');
@@ -417,9 +443,9 @@ const Step2_Childhood = ({ character, setCharacter, nextStep }) => {
             </div>
         </Card>
     );
-};
+});
 
-const Step3_CareerTerm = ({ character, setCharacter, nextStep, setWarBrokeOut }) => {
+const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeOut }) => {
     // --- STATE ---
     const [selectedCareerKey, setSelectedCareerKey] = useState('');
     const [skillIncreases, setSkillIncreases] = useState([]);
@@ -849,9 +875,9 @@ const Step3_CareerTerm = ({ character, setCharacter, nextStep, setWarBrokeOut })
             </div>
         </>
     );
-};
+});
 
-const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
+const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
     const [skillIncreases, setSkillIncreases] = useState([]);
     const [specialty, setSpecialty] = useState('');
     const [language, setLanguage] = useState('');
@@ -981,9 +1007,9 @@ const Step4_AtWar = ({ character, setCharacter, nextStep }) => {
             <CharacterStatus character={character} skillPreview={skillPreview} />
         </div>
     );
-};
+});
 
-const Step5_Finalize = ({ character, setCharacter, nextStep }) => {
+const Step5_Finalize = memo(({ character, setCharacter, nextStep }) => {
     useEffect(() => {
         const isDraftee = character.finalCareer?.type === 'civilian' && character.finalCareer?.group !== 'Intelligence' && !character.isLocal;
         
@@ -1011,14 +1037,16 @@ const Step5_Finalize = ({ character, setCharacter, nextStep }) => {
             hitCapacity, stressCapacity, rads, gear: finalGear, rank: finalRank
         }));
         nextStep();
-    }, []);
+    }, [character, setCharacter, nextStep]);
 
-    return null; // This component doesn't render anything visible
-};
+    return null; 
+});
 
-const CharacterSheet = ({ character, startOver }) => {
+const CharacterSheet = memo(({ character, startOver }) => {
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        const { default: jsPDF } = await import('jspdf');
+        
         const doc = new jsPDF();
         const margin = 10;
         let y = 15;
@@ -1293,32 +1321,29 @@ const CharacterSheet = ({ character, startOver }) => {
             </div>
         </>
     );
-};
+});
 
+// ===================================================================================
+// --- MAIN APP COMPONENT ---
+// ===================================================================================
 
 export default function App() {
     const [step, setStep] = useState(1);
     const [character, setCharacter] = useState(initialCharacter);
-    const [attributeIncreases, setAttributeIncreases] = useState({ rolls: [], total: 0 });
     const [warBrokeOut, setWarBrokeOut] = useState(false);
 
-    useEffect(() => {
-        setAttributeIncreases(twoD3());
-    }, []);
-
-    const startOver = () => {
+    const startOver = useCallback(() => {
         setCharacter(initialCharacter);
         setStep(1);
         setWarBrokeOut(false);
-        setAttributeIncreases(twoD3());
-    };
+    }, []);
 
-    const nextStep = () => setStep(s => s + 1);
+    const nextStep = useCallback(() => setStep(s => s + 1), []);
 
     const renderStep = () => {
         switch (step) {
             case 1:
-                return <Step1_InitialSetup character={character} setCharacter={setCharacter} attributeIncreases={attributeIncreases} setAttributeIncreases={setAttributeIncreases} nextStep={nextStep} />;
+                return <Step1_InitialSetup character={character} setCharacter={setCharacter} nextStep={nextStep} />;
             case 2:
                 return <Step2_Childhood character={character} setCharacter={setCharacter} nextStep={nextStep} />;
             case 3:
@@ -1339,17 +1364,7 @@ export default function App() {
 
     return (
         <>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Roboto+Mono&family=Stardos+Stencil:wght@700&display=swap');
-                
-                .font-header { font-family: 'Stardos Stencil', cursive; }
-                .font-display { font-family: 'Chakra Petch', sans-serif; }
-                .font-body { font-family: 'Roboto Mono', monospace; }
-
-                body {
-                    background-color: #000000;
-                }
-            `}</style>
+            {GlobalStyles}
             <div className="text-zinc-300 min-h-screen p-4 sm:p-8 font-body">
                 <div className="max-w-4xl mx-auto">
                     <header className="text-center mb-8">
