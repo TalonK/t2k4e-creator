@@ -196,8 +196,39 @@ const initialCharacter = {
 // Optimization: Hoist static JSX element outside the component to prevent recreation on re-renders.
 const GlobalStyles = (
     <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Roboto+Mono&family=Stardos+Stencil:wght@700&display=swap');
+        /*
+         * Best Practice: Self-host fonts by placing font files in /public/fonts
+         * and using @font-face rules like below. This prevents font flicker.
+         * Make sure to configure the 'base' in vite.config.js for GitHub Pages.
+        */
         
+        /* Stardos Stencil - Bold */
+        @font-face {
+          font-family: 'Stardos Stencil';
+          font-style: normal;
+          font-weight: 700;
+          font-display: swap;
+          src: url('./fonts/stardos-stencil-v15-latin-700.woff2') format('woff2');
+        }
+        
+        /* Chakra Petch - Bold */
+        @font-face {
+          font-family: 'Chakra Petch';
+          font-style: normal;
+          font-weight: 700;
+          font-display: swap;
+          src: url('./fonts/chakra-petch-v9-latin-700.woff2') format('woff2');
+        }
+        
+        /* Roboto Mono - Regular */
+        @font-face {
+          font-family: 'Roboto Mono';
+          font-style: normal;
+          font-weight: 400;
+          font-display: swap;
+          src: url('./fonts/roboto-mono-v22-latin-regular.woff2') format('woff2');
+        }
+
         .font-header { font-family: 'Stardos Stencil', cursive; }
         .font-display { font-family: 'Chakra Petch', sans-serif; }
         .font-body { font-family: 'Roboto Mono', monospace; }
