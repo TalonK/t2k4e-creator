@@ -21,7 +21,7 @@ const gameData = {
         "Ranged Combat": "Use for hand-held ranged weapons like pistols, bows, submachine guns, and assault rifles.",
         "Recon": "Use to spot concealed enemies, avoid ambushes, move silently and avoid detection.",
         "Survival": "Use to find food and shelter in the wild.",
-        "Tech": "Use to operate electronics, bypass alarms, pick locks, handle explosives, repair gear, scavenge for parts, and craft new items.",
+        "Tech": "Use to operate electronics, bypass alarms, pick locks, handle explosives, maintain & repair gear, scavenge for parts, and craft new items.",
         "Command": "Use to rally a person incapacitated by stress and to manage your unit.",
         "Medical Aid": "Use to treat the injured and save the dying.",
         "Persuasion": "Use charm, threats, or reason to make others see things your way."
