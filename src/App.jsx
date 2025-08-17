@@ -14,7 +14,7 @@ const gameData = {
     },
     SKILL_DESCRIPTIONS: {
         "Close Combat": "Use when fighting an enemy up close and personal, with or without a melee weapon in hand.",
-        "Heavy Weapons": "Use to fire machine guns, rocket launchers, mortars, tank guns, howitzers, and other heavy weapons.",
+        "Heavy Weapons": "Use to fire machine guns, grenade launchers, rocket launchers, mortars, tank guns, howitzers, and other heavy weapons.",
         "Stamina": "Use when your physical toughness or endurance is tested, like marching hard, resisting disease, or clinging to life after suffering a critical injury.",
         "Driving": "Use to maneuver motorcycles, cars, APCs, and even tanks.",
         "Mobility": "Use when you jump, climb, run fast, or perform any other action requiring speed or motor control.",
