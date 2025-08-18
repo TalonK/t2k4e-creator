@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import jsPDF from 'jspdf';
+import './Inter_18pt-Regular-normal.js';
+import './Inter_18pt-Bold-bold.js';
 
 // ===================================================================================
 // --- NAME GENERATOR DATA ---
@@ -1422,189 +1424,201 @@ const Step5_Finalize = memo(({ character, setCharacter, nextStep }) => {
 });
 
 const CharacterSheet = memo(({ character, startOver }) => {
+    // State to track if the PDF is currently being generated
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSave = () => {
-        const doc = new jsPDF();
-        const margin = 10;
-        let y = 15;
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const doc = new jsPDF();
 
-        const addSection = (title, contentFn) => {
-            if (y > 275) {
-                doc.addPage();
-                y = 15;
-            }
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
-            doc.text(title, margin, y);
-            doc.setDrawColor(0, 0, 0);
-            doc.line(margin, y + 2, doc.internal.pageSize.getWidth() - margin, y + 2);
-            y += 8;
-            contentFn();
-            y += 6;
-        };
+            const margin = 10;
+            let y = 15;
 
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
-        doc.text(character.name, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
-        y += 7;
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        const formattedNationality = character.nationality.charAt(0).toUpperCase() + character.nationality.slice(1);
-        doc.text(`${formattedNationality} | Age: ${character.age}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
-        y += 10;
-
-        const topSectionY = y;
-        const col1X = margin;
-        const col2X = margin + 65;
-        const col3X = margin + 130;
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.text("ATTRIBUTES & SKILLS", col1X, y);
-        doc.setDrawColor(0, 0, 0);
-        doc.line(col1X, y + 2, col2X + 55, y + 2);
-        y += 8;
-
-        const drawAttributeBlock = (attrKey, x, startY) => {
-            let currentY = startY;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(11);
-            doc.text(`${attrKey.toUpperCase()}: ${character.attributes[attrKey]} (${gameData.ATTRIBUTE_DICE[character.attributes[attrKey]]})`, x, currentY);
-            currentY += 5;
-
-            const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === attrKey);
-            skillsForAttr.forEach(([skillName, _]) => {
-                const skillLevel = character.skills[skillName] || '-';
-                const skillDie = skillLevel !== '-' ? `(${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
-                
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(10);
-                doc.text(`${skillName}:`, x + 2, currentY);
-                
-                doc.setFont("helvetica", "normal");
-                doc.text(`${skillLevel} ${skillDie}`, x + 35, currentY);
-                currentY += 5;
-            });
-            return currentY;
-        };
-
-        const strEndY = drawAttributeBlock('str', col1X, y);
-        const aglEndY = drawAttributeBlock('agl', col2X, y);
-        const topRowEndY = Math.max(strEndY, aglEndY) + 3;
-
-        const intEndY = drawAttributeBlock('int', col1X, topRowEndY);
-        const empEndY = drawAttributeBlock('emp', col2X, topRowEndY);
-        const bottomRowEndY = Math.max(intEndY, empEndY);
-
-        let y3 = topSectionY;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.text("COMBAT STATS", col3X, y3);
-        doc.setDrawColor(0, 0, 0);
-        doc.line(col3X, y3 + 2, col3X + 60, y3 + 2);
-        y3 += 8;
-
-        const combatStats = [
-            { label: "Hit Capacity:", value: character.hitCapacity },
-            { label: "Stress Capacity:", value: character.stressCapacity },
-            { label: "Coolness Under Fire (CUF):", value: character.cuf },
-        ];
-        if (character.rank) combatStats.push({ label: "Rank:", value: character.rank });
-        combatStats.push({ label: "Permanent Rads:", value: character.rads });
-
-        combatStats.forEach(stat => {
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            const labelWidth = doc.getTextWidth(stat.label);
-            doc.text(stat.label, col3X, y3);
-            
-            doc.setFont("helvetica", "normal");
-            const valueStr = String(stat.value);
-            doc.text(valueStr, col3X + labelWidth + 2, y3);
-
-            if (stat.label === "Hit Capacity:" || stat.label === "Stress Capacity:") {
-                const valueWidth = doc.getTextWidth(valueStr);
-                let checkboxX = col3X + labelWidth + 2 + valueWidth + 3;
-                const checkboxSize = 3;
-                const checkboxSpacing = 1;
-
-                for (let i = 0; i < stat.value; i++) {
-                    if (checkboxX + checkboxSize > doc.internal.pageSize.getWidth() - margin) {
-                        break; 
-                    }
-                    doc.rect(checkboxX, y3 - checkboxSize, checkboxSize, checkboxSize);
-                    checkboxX += checkboxSize + checkboxSpacing;
+            const addSection = (title, contentFn) => {
+                if (y > 275) {
+                    doc.addPage();
+                    y = 15;
                 }
-            }
-            y3 += 5;
-        });
+                doc.setFont("Inter", "bold");
+                doc.setFontSize(14);
+                doc.text(title, margin, y);
+                doc.setDrawColor(0, 0, 0);
+                doc.line(margin, y + 2, doc.internal.pageSize.getWidth() - margin, y + 2);
+                y += 8;
+                contentFn();
+                y += 6;
+            };
 
-        y = Math.max(bottomRowEndY, y3) + 5;
+            // Set the font to Inter for all subsequent text rendering
+            doc.setFont("Inter", "bold");
+            doc.setFontSize(22);
+            doc.text(character.name, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+            y += 7;
+            
+            doc.setFont("Inter", "normal");
+            doc.setFontSize(12);
+            const formattedNationality = character.nationality.charAt(0).toUpperCase() + character.nationality.slice(1);
+            doc.text(`${formattedNationality} | Age: ${character.age}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+            y += 10;
 
-        addSection("SPECIALTIES", () => {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            character.specialties.forEach(spec => {
-                const baseName = spec.split(' (')[0];
-                const description = gameData.SPECIALTY_DESCRIPTIONS[baseName] || '';
-                
-                doc.setFont("helvetica", "bold");
-                doc.text(`- ${spec}:`, margin, y);
-                
-                const labelWidth = doc.getTextWidth(`- ${spec}: `);
-                
-                doc.setFont("helvetica", "normal");
-                const splitDescription = doc.splitTextToSize(description, doc.internal.pageSize.getWidth() - margin - (margin + labelWidth));
-                doc.text(splitDescription, margin + labelWidth, y);
+            const topSectionY = y;
+            const col1X = margin;
+            const col2X = margin + 65;
+            const col3X = margin + 130;
 
-                y += (splitDescription.length * 4.5);
-                y += 1;
+            doc.setFont("Inter", "bold");
+            doc.setFontSize(14);
+            doc.text("ATTRIBUTES & SKILLS", col1X, y);
+            doc.setDrawColor(0, 0, 0);
+            doc.line(col1X, y + 2, col2X + 55, y + 2);
+            y += 8;
+
+            const drawAttributeBlock = (attrKey, x, startY) => {
+                let currentY = startY;
+                doc.setFont("Inter", "bold");
+                doc.setFontSize(11);
+                doc.text(`${attrKey.toUpperCase()}: ${character.attributes[attrKey]} (${gameData.ATTRIBUTE_DICE[character.attributes[attrKey]]})`, x, currentY);
+                currentY += 5;
+
+                const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === attrKey);
+                skillsForAttr.forEach(([skillName, _]) => {
+                    const skillLevel = character.skills[skillName] || '-';
+                    const skillDie = skillLevel !== '-' ? `(${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
+                    
+                    doc.setFont("Inter", "bold");
+                    doc.setFontSize(10);
+                    doc.text(`${skillName}:`, x + 2, currentY);
+                    
+                    doc.setFont("Inter", "normal");
+                    doc.text(`${skillLevel} ${skillDie}`, x + 35, currentY);
+                    currentY += 5;
+                });
+                return currentY;
+            };
+
+            const strEndY = drawAttributeBlock('str', col1X, y);
+            const aglEndY = drawAttributeBlock('agl', col2X, y);
+            const topRowEndY = Math.max(strEndY, aglEndY) + 3;
+
+            const intEndY = drawAttributeBlock('int', col1X, topRowEndY);
+            const empEndY = drawAttributeBlock('emp', col2X, topRowEndY);
+            const bottomRowEndY = Math.max(intEndY, empEndY);
+
+            let y3 = topSectionY;
+            doc.setFont("Inter", "bold");
+            doc.setFontSize(14);
+            doc.text("COMBAT STATS", col3X, y3);
+            doc.setDrawColor(0, 0, 0);
+            doc.line(col3X, y3 + 2, col3X + 60, y3 + 2);
+            y3 += 8;
+
+            const combatStats = [
+                { label: "Hit Capacity:", value: character.hitCapacity },
+                { label: "Stress Capacity:", value: character.stressCapacity },
+                { label: "Coolness Under Fire (CUF):", value: character.cuf },
+            ];
+            if (character.rank) combatStats.push({ label: "Rank:", value: character.rank });
+            combatStats.push({ label: "Permanent Rads:", value: character.rads });
+
+            combatStats.forEach(stat => {
+                doc.setFont("Inter", "bold");
+                doc.setFontSize(10);
+                const labelWidth = doc.getTextWidth(stat.label);
+                doc.text(stat.label, col3X, y3);
+                
+                doc.setFont("Inter", "normal");
+                const valueStr = String(stat.value);
+                doc.text(valueStr, col3X + labelWidth + 2, y3);
+
+                if (stat.label === "Hit Capacity:" || stat.label === "Stress Capacity:") {
+                    const valueWidth = doc.getTextWidth(valueStr);
+                    let checkboxX = col3X + labelWidth + 2 + valueWidth + 3;
+                    const checkboxSize = 3;
+                    const checkboxSpacing = 1;
+
+                    for (let i = 0; i < stat.value; i++) {
+                        if (checkboxX + checkboxSize > doc.internal.pageSize.getWidth() - margin) {
+                            break; 
+                        }
+                        doc.rect(checkboxX, y3 - checkboxSize, checkboxSize, checkboxSize);
+                        checkboxX += checkboxSize + checkboxSpacing;
+                    }
+                }
+                y3 += 5;
             });
-        });
 
-        addSection("GEAR", () => {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            character.gear.forEach(item => {
-                doc.text(`- ${item}`, margin, y);
+            y = Math.max(bottomRowEndY, y3) + 5;
+
+            addSection("SPECIALTIES", () => {
+                doc.setFont("Inter", "normal");
+                doc.setFontSize(10);
+                character.specialties.forEach(spec => {
+                    const baseName = spec.split(' (')[0];
+                    const description = gameData.SPECIALTY_DESCRIPTIONS[baseName] || '';
+                    
+                    doc.setFont("Inter", "bold");
+                    doc.text(`- ${spec}:`, margin, y);
+                    
+                    const labelWidth = doc.getTextWidth(`- ${spec}: `);
+                    
+                    doc.setFont("Inter", "normal");
+                    const splitDescription = doc.splitTextToSize(description, doc.internal.pageSize.getWidth() - margin - (margin + labelWidth));
+                    doc.text(splitDescription, margin + labelWidth, y);
+
+                    y += (splitDescription.length * 4.5);
+                    y += 1;
+                });
+            });
+
+            addSection("GEAR", () => {
+                doc.setFont("Inter", "normal");
+                doc.setFontSize(10);
+                character.gear.forEach(item => {
+                    doc.text(`- ${item}`, margin, y);
+                    y += 5;
+                });
+                doc.text(`- D6 rations of food, D6 rations of water, D6 rounds of ammo`, margin, y);
                 y += 5;
             });
-            doc.text(`- D6 rations of food, D6 rations of water, D6 rounds of ammo`, margin, y);
-            y += 5;
-        });
 
-        addSection("CAREER PATH", () => {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            character.careerPath.forEach((term, i) => {
-                let label = `Term ${i}`;
-                if (term.career.type === 'Childhood') label = 'Childhood';
-                else if (term.career.name === 'At War') label = 'At War';
-                
-                let careerName = term.career.name;
-                if (term.career.name === 'Officer' && term.functionalArea) {
-                    careerName = `Officer [${term.functionalArea}]`;
-                } else if (term.career.name === 'At War') {
-                     careerName = '';
-                }
-                
-                const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
-                const details = `${careerName ? `${careerName} ` : ''}(${cleanedSkills.join(', ')}) ${term.specialtyGained ? `-> ${term.specialtyGained}` : ''}`;
-                
-                const labelText = `${label}:`;
-                doc.setFont("helvetica", "bold");
-                doc.text(labelText, margin, y);
-                
-                const labelWidth = doc.getTextWidth(labelText);
+            addSection("CAREER PATH", () => {
+                doc.setFont("Inter", "normal");
+                doc.setFontSize(10);
+                character.careerPath.forEach((term, i) => {
+                    let label = `Term ${i}`;
+                    if (term.career.type === 'Childhood') label = 'Childhood';
+                    else if (term.career.name === 'At War') label = 'At War';
+                    
+                    let careerName = term.career.name;
+                    if (term.career.name === 'Officer' && term.functionalArea) {
+                        careerName = `Officer [${term.functionalArea}]`;
+                    } else if (term.career.name === 'At War') {
+                         careerName = '';
+                    }
+                    
+                    const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
+                    const details = `${careerName ? `${careerName} ` : ''}(${cleanedSkills.join(', ')}) ${term.specialtyGained ? `-> ${term.specialtyGained}` : ''}`;
+                    
+                    const labelText = `${label}:`;
+                    doc.setFont("Inter", "bold");
+                    doc.text(labelText, margin, y);
+                    
+                    const labelWidth = doc.getTextWidth(labelText);
 
-                doc.setFont("helvetica", "normal");
-                doc.text(details, margin + labelWidth + 2, y);
-                y += 5.5;
+                    doc.setFont("Inter", "normal");
+                    doc.text(details, margin + labelWidth + 2, y);
+                    y += 5.5;
+                });
             });
-        });
 
-        doc.save(`T2K4E - ${character.name.replace(/\s/g, '_') || 'character'}.pdf`);
+            doc.save(`T2K4E - ${character.name.replace(/\s/g, '_') || 'character'}.pdf`);
+        } catch (error) {
+            console.error("Failed to generate PDF:", error);
+            // Optionally, you could add a user-facing error message here
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const formattedNationality = character.nationality.charAt(0).toUpperCase() + character.nationality.slice(1);
@@ -1699,7 +1713,9 @@ const CharacterSheet = memo(({ character, startOver }) => {
                 </div>
             </Card>
             <div className="flex space-x-4 mt-6">
-                <Button onClick={handleSave} className="w-full bg-green-700 hover:bg-green-800">Save to PDF</Button>
+                <Button onClick={handleSave} disabled={isSaving} className="w-full bg-green-700 hover:bg-green-800">
+                    {isSaving ? 'Saving...' : 'Save to PDF'}
+                </Button>
                 <Button onClick={startOver} className="w-full">Create Another Character</Button>
             </div>
         </>
