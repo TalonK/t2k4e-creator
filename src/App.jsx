@@ -1,4 +1,264 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import jsPDF from 'jspdf';
+
+// ===================================================================================
+// --- NAME GENERATOR DATA ---
+// ===================================================================================
+const namesByNationality = {
+    american: {
+        male: [
+            // ~50 names from 1940s (Older, less common)
+            "James", "Robert", "John", "William", "Richard", "David", "Charles", "Thomas", "Donald", "Ronald", 
+            "Larry", "George", "Kenneth", "Jerry", "Edward", "Paul", "Frank", "Raymond", "Harold", "Walter", 
+            "Roger", "Gerald", "Arthur", "Carl", "Henry", "Willie", "Bruce", "Joe", "Jack", "Roy", "Ralph", 
+            "Eugene", "Billy", "Albert", "Louis", "Harry", "Howard", "Stanley", "Leonard", "Fred", "Clarence", 
+            "Earl", "Alfred", "Melvin", "Russell", "Francis", "Frederick", "Allen", "Marvin", "Ernest",
+            // ~75 names from 1950s
+            "Michael", "Mark", "Steven", "Gary", "Joseph", "Daniel", "Stephen", "Dennis", "Terry", "Randy", 
+            "Philip", "Bobby", "Johnny", "Keith", "Douglas", "Peter", "Alan", "Wayne", "Vincent", "Patrick", 
+            "Gregory", "Scott", "Timothy", "Craig", "Danny", "Ricky", "Dale", "Barry", "Jimmy", "Curtis", 
+            "Todd", "Lance", "Clifford", "Leroy", "Leo", "Calvin", "Rodney", "Norman", "Bradley", "Ricardo", 
+            "Lee", "Don", "Victor", "Max", "Bernard", "Manuel", "Ronnie", "Marion", "Lloyd", "Gilbert", 
+            "Hector", "Perry", "Franklin", "Ted", "Glenn", "Brent", "Lonnie", "Ross", "Andy", "Donnie", 
+            "Ervin", "Kent", "Neil", "Rex", "Bob", "Brad", "Cecil", "Ray", "Dean", "Carlton", "Herman", 
+            "Sidney", "Alvin", "Frankie", "Ron", "Willard",
+            // ~150 names from 1960s
+            "Jeffrey", "Brian", "Kevin", "Christopher", "Anthony", "Jason", "Todd", "Shawn", "Sean", "Troy", 
+            "Corey", "Chad", "Eric", "Shane", "Darren", "Derek", "Brett", "Dustin", "Travis", "Bryan", "Marc", 
+            "Jeffery", "Phillip", "Reginald", "Tony", "Derrick", "Joel", "Jerome", "Andre", "Darryl", "Jamie", 
+            "Randall", "Terrance", "Shaun", "Jon", "Mathew", "Mitchell", "Casey", "Duane", "Tyrone", "Darrell", 
+            "Warren", "Sergio", "Marcus", "Fernando", "Clinton", "Gavin", "Ramon", "Devin", "Mario", "Jesus", 
+            "Ernesto", "Cameron", "Orlando", "Raul", "Antonio", "Erick", "Israel", "Ivan", "Julio", "Rickey", 
+            "Wesley", "Armando", "Dwayne", "Dwight", "Eddie", "Edwin", "Evan", "Everett", "Floyd", "Garrett", 
+            "Garry", "Gene", "Gordon", "Greg", "Herbert", "Hubert", "Hugh", "Isaac", "Jared", "Jay", "Jeff", 
+            "Jeremiah", "Jim", "Johnnie", "Ken", "Kenny", "Kirk", "Laurence", "Leon", "Lester", "Lewis", 
+            "Lowell", "Lucas", "Luis", "Luke", "Mack", "Martin", "Mason", "Matt", "Maurice", "Merle", "Micheal", 
+            "Mickey", "Miguel", "Mike", "Miles", "Milton", "Morris", "Nathaniel", "Neal", "Nelson", "Nick", 
+            "Noel", "Oliver", "Ollie", "Omar", "Oscar", "Owen", "Rafael", "Randolph", "Rob", "Robbie", "Roberto", 
+            "Rocky", "Rod", "Roland", "Royal", "Ruben", "Rudolph", "Salvador", "Sam", "Saul", "Sebastian", 
+            "Seth", "Steve", "Stuart", "Sylvester", "Terri", "Theodore", "Tim", "Tom", "Tommy", "Vernon", 
+            "Virgil", "Wade", "Wyatt",
+            // ~325 names from 1970s & 1980s (Youngest, most common)
+            "Matthew", "Joshua", "Justin", "Andrew", "Ryan", "Jonathan", "Adam", "Nicholas", "Brandon", "Jacob", 
+            "Tyler", "Zachary", "Kyle", "Aaron", "Jeremy", "Jose", "Christian", "Ethan", "Dylan", "Jordan", 
+            "Austin", "Gabriel", "Logan", "Juan", "Noah", "Elijah", "Caleb", "Benjamin", "Samuel", "Alexander", 
+            "Nathan", "Jesse", "Cody", "Carlos", "Stephen", "Patrick", "Alex", "Bill", "Corey", "Cory", "Craig", 
+            "Curtis", "Dale", "Danny", "Darrell", "Darren", "Dave", "Dean", "Derek", "Don", "Duane", "Dustin", 
+            "Dwayne", "Dwight", "Earl", "Eddie", "Edgar", "Edwin", "Evan", "Everett", "Floyd", "Francis", 
+            "Franklin", "Fred", "Frederick", "Garrett", "Garry", "Gene", "Gilbert", "Glen", "Glenn", "Gordon", 
+            "Greg", "Herbert", "Herman", "Howard", "Hubert", "Hugh", "Isaac", "Ivan", "Jared", "Jay", "Jeff", 
+            "Jeffery", "Jeremiah", "Jesus", "Jim", "Jimmy", "Joel", "Johnnie", "Jon", "Julio", "Ken", "Kenny", 
+            "Kent", "Kirk", "Lance", "Laurence", "Lee", "Leo", "Leon", "Leonard", "Leroy", "Lester", "Lewis", 
+            "Lloyd", "Lonnie", "Lowell", "Lucas", "Luis", "Luke", "Mack", "Manuel", "Marc", "Marcus", "Mario", 
+            "Marion", "Martin", "Marvin", "Mason", "Mathew", "Matt", "Maurice", "Max", "Melvin", "Merle", 
+            "Micheal", "Mickey", "Miguel", "Mike", "Miles", "Milton", "Mitchell", "Morris", "Nathaniel", "Neal", 
+            "Neil", "Nelson", "Nick", "Noel", "Norman", "Oliver", "Ollie", "Omar", "Oscar", "Owen", "Perry", 
+            "Philip", "Phillip", "Rafael", "Ramon", "Randall", "Randolph", "Raul", "Ray", "Reginald", "Rex", 
+            "Ricardo", "Rick", "Rickey", "Ricky", "Rob", "Robbie", "Roberto", "Rocky", "Rod", "Rodney", "Roland", 
+            "Ron", "Ronnie", "Ross", "Royal", "Ruben", "Rudolph", "Russell", "Salvador", "Sam", "Saul", 
+            "Sebastian", "Seth", "Shane", "Shaun", "Shawn", "Sidney", "Stanley", "Steve", "Stuart", "Sylvester", 
+            "Ted", "Terri", "Theodore", "Tim", "Todd", "Tom", "Tommy", "Tony", "Travis", "Troy", "Tyrone", 
+            "Vernon", "Victor", "Vincent", "Virgil", "Wade", "Warren", "Wesley", "Willard", "Wyatt"
+        ],
+        female: [
+            // ~25 names from 1940s (Older, less common)
+            "Mary", "Barbara", "Patricia", "Carol", "Judith", "Betty", "Nancy", "Shirley", "Margaret", "Dorothy", 
+            "Joyce", "Joan", "Carolyn", "Helen", "Virginia", "Janice", "Marilyn", "Frances", "Jean", "Doris", 
+            "Gloria", "Phyllis", "Norma", "Mildred", "Lillian",
+            // ~50 names from 1950s & 1960s
+            "Linda", "Susan", "Deborah", "Karen", "Donna", "Cynthia", "Sandra", "Pamela", "Sharon", "Kathleen", 
+            "Debra", "Lisa", "Kimberly", "Michelle", "Tammy", "Lori", "Laura", "Elizabeth", "Julie", "Brenda", 
+            "Cheryl", "Denise", "Teresa", "Janet", "Diane", "Catherine", "Ann", "Rose", "Beverly", "Grace", 
+            "Judy", "Theresa", "Diana", "Marie", "Julia", "Wendy", "Gail", "Kathy", "Connie", "Vicki", 
+            "Sheila", "Rhonda", "Jacqueline", "Rita", "Vickie", "Kim", "Ellen",
+            // ~325 names from 1970s & 1980s (Youngest, most common)
+            "Jennifer", "Jessica", "Amanda", "Ashley", "Sarah", "Stephanie", "Melissa", "Nicole", "Heather", 
+            "Tiffany", "Crystal", "Amy", "Angela", "Rebecca", "Kelly", "Christina", "Shannon", "Christine", 
+            "Tracy", "Dawn", "Rachel", "Lauren", "Megan", "Erin", "Jamie", "Amber", "Brandy", "Danielle", 
+            "April", "Andrea", "Sara", "Maria", "Tonya", "Stacy", "Erica", "Monica", "Stacey", "Tara", 
+            "Holly", "Heidi", "Melanie", "Alicja", "Veronica", "Gina", "Anna", "Renee", "Tamara", "Melinda", 
+            "Kathryn", "Sherry", "Allison", "Alyssa", "Ana", "Angel", "Anita", "Anne", "Annette", "Audrey", 
+            "Bernice", "Bertha", "Bessie", "Beth", "Billie", "Bonnie", "Brandi", "Brooke", "Carla", "Carole", 
+            "Caroline", "Carrie", "Cathy", "Charlene", "Charlotte", "Chelsea", "Christy", "Cindy", "Clara", 
+            "Claudia", "Colleen", "Courtney", "Daisy", "Dana", "Darla", "Darlene", "Deanna", "Debbie", "Destiny", 
+            "Dianne", "Dolores", "Dora", "Edith", "Edna", "Eileen", "Elaine", "Eleanor", "Ella", "Elsie", 
+            "Erika", "Erma", "Esther", "Ethel", "Eunice", "Eva", "Faith", "Faye", "Felicia", "Florence", 
+            "Freda", "Gayle", "Geneva", "Genevieve", "Georgia", "Geraldine", "Gertrude", "Ginger", "Gladys", 
+            "Glenda", "Gretchen", "Gwendolyn", "Hailey", "Harriet", "Hazel", "Hilda", "Hope", "Ida", "Irene", 
+            "Iris", "Irma", "Isabel", "Ivy", "Jackie", "Jade", "Jasmine", "Jeanette", "Jeanne", "Jenna", 
+            "Jenny", "Jill", "Jo", "Joann", "Joanna", "Joanne", "Jodi", "Jody", "Jolene", "Josephine", "Joy", 
+            "Juanita", "Julianne", "June", "Kaitlyn", "Kari", "Karla", "Kate", "Katie", "Katrina", "Kay", 
+            "Kendra", "Kerry", "Kristen", "Kristi", "Kristin", "Kristina", "Kristy", "Kylie", "Lana", "Leah", 
+            "Leigh", "Lela", "Lena", "Leona", "Leslie", "Leticia", "Lillie", "Lindsay", "Lindsey", "Lois", 
+            "Lola", "Lora", "Loraine", "Loretta", "Lorraine", "Louise", "Lucille", "Lucy", "Luz", "Lydia", 
+            "Lynn", "Lynne", "Mabel", "Madeline", "Mae", "Maggie", "Malinda", "Mallory", "Mamie", "Mandy", 
+            "Marcia", "Margarita", "Margie", "Marian", "Marianne", "Marjorie", "Marla", "Marlene", "Marsha", 
+            "Martina", "Maryann", "Marylou", "Maureen", "Maxine", "Melody", "Mercedes", "Meredith", "Michele", 
+            "Mindy", "Minnie", "Miranda", "Miriam", "Misty", "Molly", "Mona", "Myra", "Myrtle", "Nadia", 
+            "Nadine", "Naomi", "Natalie", "Natasha", "Nellie", "Nina", "Nora", "Opal", "Paige", "Pam", "Patsy", 
+            "Patty", "Paula", "Paulette", "Pauline", "Pearl", "Peggy", "Penny", "Priscilla", "Ramona", "Regina", 
+            "Roberta", "Robin", "Rochelle", "Rosa", "Rosemary", "Rosie", "Roxanne", "Ruby", "Sabrina", "Sadie", 
+            "Sally", "Shari", "Shawna", "Sheila", "Shelby", "Shelia", "Shelley", "Sheri", "Sherri", "Sheryl", 
+            "Silvia", "Simone", "Sonia", "Sonya", "Sophie", "Stella", "Sue", "Susie", "Suzanne", "Sydney", 
+            "Sylvia", "Tabitha", "Tami", "Tanya", "Tasha", "Taylor", "Thelma", "Toni", "Tracey", "Traci", 
+            "Tracy", "Tricia", "Trisha", "Valerie", "Vanessa", "Velma", "Vera", "Victoria", "Viola", "Violet", 
+            "Vivian", "Wanda", "Whitney", "Wilma", "Winifred", "Yolanda", "Yvonne", "Zoe"
+        ],
+        last: [
+            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", 
+            "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", 
+            "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", 
+            "Robinson", "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", 
+            "Flores", "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", 
+            "Roberts", "Gomez", "Phillips", "Evans", "Turner", "Diaz", "Parker", "Cruz", "Edwards", "Collins", 
+            "Reyes", "Stewart", "Morris", "Morales", "Murphy", "Cook", "Rogers", "Gutierrez", "Ortiz", "Morgan", 
+            "Cooper", "Peterson", "Bailey", "Reed", "Kelly", "Howard", "Ramos", "Kim", "Cox", "Ward", 
+            "Richardson", "Watson", "Brooks", "Chavez", "Wood", "James", "Bennett", "Gray", "Mendoza", "Ruiz", 
+            "Hughes", "Price", "Alvarez", "Castillo", "Sanders", "Patel", "Myers", "Long", "Ross", "Foster", 
+            "Jimenez", "Powell", "Jenkins", "Perry", "Russell", "Sullivan", "Bell", "Coleman", "Butler", 
+            "Henderson", "West", "Simmons", "Wallace", "Jordan", "Reynolds", "Hamilton", "Graham", "Fisher", 
+            "Stone", "Kennedy", "Warren", "Dixon", "Burns", "Gordon", "Shaw", "Holmes", "Rice", "Robertson", 
+            "Hunt", "Black", "Daniels", "Palmer", "Mills", "Nichols", "Grant", "Knight", "Ferguson", "Hawkins", 
+            "Dunn", "Perkins", "Hudson", "Spencer", "Gardner", "Stephens", "Payne", "Pierce", "Berry", "Matthews", 
+            "Arnold", "Wagner", "Willis", "Ray", "Watkins", "Olson", "Carroll", "Duncan", "Snyder", "Hart", 
+            "Cunningham", "Bradley", "Lane", "Andrews", "Harper", "Fox", "Riley", "Armstrong", "Carpenter", 
+            "Weaver", "Greene", "Lawrence", "Elliott", "Sims", "Austin", "Peters", "Kelley", "Franklin", 
+            "Lawson", "Fields", "Ryan", "Schmidt", "Carr", "Vasquez", "Wheeler", "Chapman", "Oliver", 
+            "Montgomery", "Richards", "Williamson", "Johnston", "Banks", "Meyer", "Bishop", "Mccoy", "Howell", 
+            "Morrison", "Hansen", "Fernandez", "Garza", "Harvey", "Little", "Burton", "Stanley", "George", 
+            "Jacobs", "Reid", "Fuller", "Lynch", "Dean", "Gilbert", "Garrett", "Romero", "Welch", "Larson", 
+            "Frazier", "Burke", "Hanson", "Day", "Moreno", "Bowman", "Medina", "Fowler", "Brewer", "Hoffman", 
+            "Carlson", "Silva", "Pearson", "Holland", "Douglas", "Fleming", "Jensen", "Vargas", "Byrd", 
+            "Davidson", "Hopkins", "May", "Herrera", "Wade", "Soto", "Walters", "Curtis", "Neal", "Caldwell", 
+            "Lowe", "Jennings", "Barnett", "Graves", "Solis", "Cohen", "Sharp", "Chambers", "Rowe", "Walsh", 
+            "Barber", "Padilla", "Bush", "Goodwin", "Powers", "Mullins", "Cain", "Parks", "Dominguez", "Sherman", 
+            "Ball", "Hogan", "Barton", "Pena", "Goodman", "Blair", "Hubbard", "Ash", "Salazar", "Mann", 
+            "Zimmerman", "Todd", "Figueroa", "Dennis", "Carver", "Holden", "Singleton", "Whitaker", "Potter", 
+            "Poole", "Burnett", "Hampton", "Cobb", "Swanson", "Glass", "Luna", "Casey", "Lloyd", "Patrick", 
+            "Hale", "Beck", "Baldwin", "Woodward", "Griffith", "Valdez", "Boswell", "York", "Johns", "Blanchard", 
+            "Mcbride", "Kane", "Bates", "Lucas", "Wong", "Serrano", "Mckinney", "Robbins", "Phelps", "Roy", 
+            "Dodson", "Gates", "Vincent", "Sampson", "Tapia", "Barrett", "Clements", "Case", "Gill", "Logan", 
+            "Horton", "Jaramillo", "Pittman", "Estrada", "Marsh", "Farley", "Shepard", "Brock", "Moon", "Cassidy", 
+            "Holt", "Byers", "Love", "Downs", "Riddle", "Kirk", "Combs", "Blankenship", "Paul", "Lamb", "Shepherd", 
+            "Dickson", "Sellers", "Cherry", "Bean", "Foley", "Doyle", "Waters", "Herman", "Mcmahon", "Bowers", 
+            "Haynes", "Shelton", "Hodge", "Mcguire", "Walton", "Conner", "Adkins", "Webster", "Townsend", "Ingram", 
+            "Mejia", "Heath", "Wall", "Summers", "Newton", "Bradford", "Cross", "Mcconnell", "House", "Mcintosh", 
+            "Pruitt", "Good", "Compton", "Stout", "Buck", "Ochoa", "Vaughn", "Patton", "Tate", "Fry", "Waller", 
+            "Coffey", "Mckenzie", "Hess", "Beasley", "Bryan", "Dale", "Horn", "Weeks", "Mcneil", "Barron", 
+            "Gallegos", "Kerr", "Glover", "Eaton", "Hardy", "Stark", "Duffy", "Kirkland", "Small", "Miranda", 
+            "Knox", "Pace", "Hull", "Buckley", "Winters", "Snow", "Mcclain", "Lindsey", "Leon", "Dotson", 
+            "Blackburn", "Beach", "Robles", "Dunlap", "Bauer", "Marks", "Valenzuela", "Golden", "Whitney", "Strong", 
+            "Hardin", "Howe", "Cabrera", "Gillespie", "Mercado", "Carey", "Cantu", "Lang", "Sweeney", "Clay", 
+            "Macias", "Rollins", "Barajas", "Gentry", "Rowland", "Rivers", "Stanton", "Best", "Kramer", "Henson", 
+            "Hines", "Hyde", "Flynn", "Slater", "Osborne", "Zuniga", "French", "Ayers", "Riggs", "Vang", "Gross", 
+            "Crosby", "Pope", "Chandler", "Oneal", "Maynard", "Malone", "Battle", "Puckett", "Starks", "Moody", 
+            "Mcclure", "Callahan", "Le", "Dillon", "Key", "Sears", "Hayden", "Shannon", "Pacheco", "Harmon", 
+            "Bender", "Whitfield", "Brandt", "Barr", "Gaines", "Short", "Morrow", "Roach", "Rasmussen", "Dickerson", 
+            "Hinton", "Lam", "English", "Hopper", "Mercer", "Justice", "Pate", "Curry", "Guerrero", "Santana", 
+            "Conley", "Buckner", "Lynn", "Holman", "Erickson", "Hutchinson", "Mcdaniel", "Webber", "Stapleton", 
+            "Odonnell", "Joyner", "Donovan", "Barlow", "Fulton", "Stroud", "Schultz", "Boyle", "Meadows", "Barker", 
+            "Moses", "Hook", "Osborn", "Dobson", "Huff", "Sweet", "Adair", "Harden", "Montoya", "Coronado", 
+            "Aguilar", "Dalton", "Storey", "Alford", "Finch", "Hobbs", "Kidd", "Mcmahan", "Boykin", "Dodd", 
+            "Crane", "Wilcox", "Galloway", "Odom", "Davenport", "Mccall", "Craft", "Cleveland", "Fletcher", 
+            "Gamble", "Cash", "Stallings", "Wilkerson", "Bond", "Rush", "Hurley", "Beatty", "Trevino", "Manning", 
+            "Conway", "Farmer", "Hyatt", "Yates", "Durham", "Stafford", "Head", "Burch", "Livingston", "Herring", 
+            "Whitley", "Hendricks", "Spears", "Hahn", "Chang", "Mccarty", "Pollard", "Nixon", "Terrell", "Watts", 
+            "Ewing", "Villarreal", "Dickey", "Mack", "Stuart", "Randolph", "Sutton", "Kemp", "Cervantes", 
+            "Dickinson", "Donnelly", "Otto", "Fritz", "Flowers", "Hoover", "Gallagher", "Cote", "Orozco", 
+            "Knapp", "Barry", "Smallwood", "Schroeder", "Madsen", "Moyer", "Lu", "Whitman", "Booker", "Farrell", 
+            "Larsen", "Gould", "Burks", "Vu", "Fischer", "Moser", "Poe", "Rich", "Schwartz", "Joyce", "Yoder", 
+            "Rubio", "Giles", "Capps", "Wolfe", "Helton", "Shields", "Boyce", "Swartz", "Horne", "Daley", "Abbott", 
+            "Driscoll", "Ali", "Finley", "Olvera", "Gleason", "Trujillo", "Baird", "Conrad", "Salas", "Zavala", 
+            "Ponce", "Langley", "Saucedo", "Snider", "Cornish", "Kinney", "Hickey", "Davila", "Pickett", "Starr", 
+            "Humphrey", "Kersey", "Tierney", "Gorman", "Forrest", "Steele", "Champion", "Draper", "Matos", 
+            "Mckee", "Kaufman", "Bacon", "Pham", "Ibarra", "Irvin", "Shore", "Mccormick", "Holloway", "Correa", 
+            "Spence", "Pritchard", "Cummings", "Jorgensen", "Langston", "Dougherty", "Landry", "Whalen", "Rouse", 
+            "Mullen", "Conklin", "Crowley", "Holcomb", "Paredes", "Sexton", "Rizzo", "Covington", "Corbin", 
+            "Escobar", "Krueger", "Sinclair", "Benson", "Goss", "Huynh", "Knowles", "Corey", "Mays", "Shea", 
+            "Ho", "Feldman", "Mcneal", "Hatch", "Goodrich", "Weir", "Blackwell", "Pina", "Sauceda", "Mcdowell", 
+            "Gibbs", "Urban", "Aguirre", "Givens", "Farris", "Gerard", "Ohara", "Eason", "Gaston", "Moya", 
+            "Parra", "Mims", "Lockhart", "Childers", "Daly", "Haas", "Lester", "Sparks", "Ratliff", "Godwin", 
+            "Munoz", "Cochran", "Lutz", "Wynn", "Kenny", "Downey", "Mcnally", "Abrams", "Velez", "Platt", 
+            "Huffman", "Haney", "Elder", "Cornett", "Andrade", "Doherty", "Cordova", "Keenan", "Castaneda", 
+            "Tyson", "Slaughter", "Sumner", "Gibbons", "Berger", "Rosario", "Paulson", "Pineda", "Major", "Lacy", 
+            "Gee", "Kirkpatrick", "Mcfarland", "Dudley", "Sierra", "Tuttle", "Sherwood", "Painter", "Block", 
+            "Connolly", "Hong", "Christensen", "Lott", "Bundy", "Tomlinson", "Goldberg", "Mcknight", "Hsu", 
+            "Valle", "Potts", "Grace", "Betts", "Mccabe", "Richter", "Navarro", "Talley", "Lovell", "Crow", 
+            "Burnham", "Reese", "Bradshaw", "Savage", "Hatfield", "Mcintyre", "Pritchett", "Olsen", "Gallardo", 
+            "Drummond", "Clayton", "Saylor", "Goins", "Crowder", "Pugh", "Pollock", "Vance", "Sutherland", 
+            "Chamberlain", "Tracey", "Parrish", "Mooney", "Franco", "Bowen", "Crouch", "Arellano", "Lemus", 
+            "Schafer", "Hutchins", "Steiner", "Blanton", "Woodard", "Mackey", "Coley", "Tidwell", "Cannon", 
+            "Stover", "Bliss", "Slone", "Roberson", "Gay", "Mckay", "Fuchs", "Staley", "Lowery", "Norton", 
+            "Mesa", "Keyes", "Newsome", "Slade", "Lilly", "Sheehan", "Hester", "Vinson", "Bello", "Mosley", 
+            "Alston", "Hood", "Fountain", "Kellogg", "Kessler", "Acosta", "Foreman", "Denton", "Redd", "Pettit", 
+            "Elmore", "Rankin", "Bullock", "Nolan", "Pagan", "Chin", "Talbot", "Coates", "Bobo", "Metcalf", 
+            "Harrington", "Macon", "Ritchie", "Peck", "Goldman", "Cheung", "Bowling", "Hilliard", "Godfrey", 
+            "Myles", "Medrano", "Ocampo", "Self", "Tolbert", "Finney", "Mares", "Flanagan", "Crockett", "Lugo", 
+            "Dow", "Darling", "Meade", "Lim", "Kenney", "Falk", "Mohr", "Paz", "Connors", "Funk", "Ramey", 
+            "Layton", "Thurman", "Cornell", "Felton", "Brito", "Seeley", "Fairchild", "Stoddard", "Minton", 
+            "Hurd", "Donahue", "Hitchcock", "Pfeiffer", "Mcginnis", "Iverson", "Creech", "Mott", "Quintana", 
+            "Rutherford", "Burk", "Beyer", "Clemons", "Gunn", "Haywood", "Elkins", "Mabry", "Canfield", 
+            "Mcclellan", "Magana", "Thayer", "Mangum", "Henley", "Aldridge", "Chaney", "Hammond", "Crocker", 
+            "Lake", "Stinson", "Madrid", "Hogue", "Mellor", "Pitt", "Kiser", "Jansen", "Lorenz", "Darnell", 
+            "Valdes", "Milton", "Pantoja", "Waddell", "Gallo", "Mccain", "Thorne", "Teague", "Pratt", "Jeffries", 
+            "Jacobson", "Starkey", "Souza", "Mayfield", "Guy", "Carmona", "Hackett", "Sterling", "Heller", 
+            "Townes", "Manley", "Cullen", "Kearney", "Skinner"
+        ]
+    },
+    polish: {
+        male: [
+            // Weighted by combining decade-based lists
+            ...["Jan", "Stanisław", "Józef", "Andrzej", "Tadeusz", "Jerzy", "Kazimierz", "Ryszard", "Władysław", "Henryk", "Zdzisław", "Mieczysław", "Czesław", "Eugeniusz", "Marian", "Stefan", "Roman", "Zbigniew", "Leszek", "Bogdan", "Feliks", "Leon", "Antoni", "Franciszek", "Aleksander", "Wacław", "Edmund", "Zygmunt", "Bolesław", "Ignacy"],
+            ...["Krzysztof", "Marek", "Piotr", "Grzegorz", "Wojciech", "Mariusz", "Dariusz", "Sławomir", "Jarosław", "Jacek", "Mirosław", "Waldemar", "Ireneusz", "Artur", "Witold", "Sylwester", "Zenon", "Adam", "Tomasz", "Radosław", "Krystian", "Arkadiusz", "Maciej", "Kamil", "Wiesław", "Bogusław", "Lech", "Gracjan", "Lucjan", "Ludwik"].flatMap(i => [i, i]),
+            ...["Marcin", "Michał", "Paweł", "Łukasz", "Robert", "Rafał", "Mateusz", "Jakub", "Damian", "Dawid", "Sebastian", "Adrian", "Patryk", "Przemysław", "Cezary", "Daniel", "Bartosz", "Kacper", "Szymon", "Filip", "Dominik", "Norbert", "Konrad", "Karol", "Igor", "Hubert", "Oskar", "Mikołaj", "Bartek", "Eryk", "Alan", "Wiktor", "Emil", "Kuba", "Marcel", "Fabian", "Oliwier", "Tymon", "Nikodem", "Ignacy", "Franciszek", "Antoni", "Aleksander", "Wojciech", "Leon"].flatMap(i => [i, i, i])
+        ],
+        female: [
+            ...["Maria", "Krystyna", "Barbara", "Teresa", "Janina", "Zofia", "Danuta", "Elżbieta", "Halina", "Irena", "Helena", "Jadwiga", "Stanisława", "Wanda", "Genowefa", "Stefania", "Regina", "Marianna", "Józefa", "Kazimiera", "Leokadia", "Alfreda", "Bronisława", "Czesława", "Felicja", "Apolonia", "Franciszka", "Gertruda", "Henryka", "Honorata"],
+            ...["Anna", "Ewa", "Grażyna", "Małgorzata", "Jolanta", "Beata", "Agnieszka", "Joanna", "Dorota", "Iwona", "Bożena", "Alicja", "Renata", "Urszula", "Izabela", "Hanna", "Lidia", "Wiesława", "Katarzyna", "Elwira", "Mirosława", "Marzena", "Lucyna", "Celina", "Aldona", "Bernadeta", "Cecylia", "Dagmara", "Eugenia", "Fabiana"].flatMap(i => [i, i]),
+            ...["Magdalena", "Monika", "Aleksandra", "Paulina", "Karolina", "Marta", "Natalia", "Ewelina", "Patrycja", "Sylwia", "Justyna", "Kinga", "Weronika", "Edyta", "Aneta", "Agata", "Dominika", "Klaudia", "Kamila", "Emilia", "Martyna", "Daria", "Angelika", "Wioletta", "Oliwia", "Sandra", "Adrianna", "Gabriela", "Laura", "Julia", "Amelia", "Zuzanna", "Maja", "Lena", "Wiktoria", "Alicja", "Hanna", "Pola", "Antonina", "Zofia", "Liliana", "Iga", "Nadia", "Kornelia", "Milena"].flatMap(i => [i, i, i])
+        ],
+        last: ["Nowak", "Kowalski", "Wiśniewski", "Wójcik", "Kowalczyk", "Kamiński", "Lewandowski", "Zieliński", "Szymański", "Woźniak", "Dąbrowski", "Kozłowski", "Jankowski", "Mazur", "Wojciechowski", "Kwiatkowski", "Krawczyk", "Kaczmarek", "Piotrowski", "Grabowski", "Zając", "Król", "Wieczorek", "Jabłoński", "Nowicki", "Majewski", "Olszewski", "Stępień", "Malinowski", "Jaworski", "Adamczyk", "Górski", "Pawlak", "Sikora", "Walczak", "Witkowski", "Baran", "Rutkowski", "Michalski", "Szewczyk", "Ostrowski", "Tomaszewski", "Zalewski", "Wróblewski", "Jasiński", "Marciniak", "Bąk", "Sokołowski", "Szczepański", "Sawicki", "Kucharski", "Lis", "Maciejewski", "Kubiak", "Kalinowski", "Czarnecki", "Głowacki", "Urbański", "Sadowski", "Borkowski", "Sobczak", "Baranowski", "Chmielewski", "Gajewski", "Krajewski", "Szulc", "Mazurek", "Brzeziński", "Klimek", "Przybylski", "Kaźmierczak", "Ciesielski", "Wesołowski", "Błaszczyk", "Andrzejewski", "Kołodziej", "Wilk", "Szymczak", "Cieslak", "Gajda", "Krupa", "Marek", "Bednarek", "Madej", "Janik", "Lesiak", "Tomczyk", "Kowal", "Wrona", "Marcinkowski", "Orłowski", "Kowalewski", "Ziółkowski", "Wysocki", "Cieślak", "Bednarczyk", "Musiał", "Bielak", "Laskowski", "Matuszewski", "Janiszewski", "Kopeć", "Grzelak", "Gołębiewski", "Rogowski", "Caban", "Nawrocki", "Czyż", "Makowski", "Kaczmarczyk", "Dobrowolski", "Bednarski", "Biernacki", "Grzyb", "Jastrzębski", "Kurek", "Cichocki", "Włodarczyk", "Kosiński", "Zaremba", "Kania", "Mucha", "Mróz", "Sobolewski", "Cieślik", "Witek", "Pająk", "Wolski", "Piątek", "Czajkowski", "Kulesza", "Marczak", "Wierzbicki", "Polak", "Wróbel", "Stasiak", "Sowa", "Urban", "Niemiec", "Flis", "Kowal", "Czech", "Lach", "Sikorski", "Krakowiak", "Turek", "Zięba", "Nawara", "Góral", "Owczarek", "Matusiak", "Bielski", "Stankiewicz", "Piasecki", "Jezierski", "Krzyżanowski", "Urbanek", "Buczek", "Golec", "Popławski", "Kozak", "Kania", "Wawrzyniak"]
+    },
+    german: {
+        male: [
+            ...["Hans", "Klaus", "Jürgen", "Peter", "Günter", "Werner", "Wolfgang", "Manfred", "Horst", "Gerhard", "Dieter", "Karl", "Helmut", "Uwe", "Bernd", "Walter", "Rolf", "Joachim", "Heinz", "Kurt", "Rudolf", "Alfred", "Erich", "Fritz", "Wilhelm", "Hermann", "Paul", "Egon", "Ernst", "Otto"],
+            ...["Michael", "Thomas", "Andreas", "Stefan", "Frank", "Jörg", "Dirk", "Torsten", "Oliver", "Matthias", "Ralf", "Axel", "Carsten", "Holger", "Ingo", "Jens", "Guido", "Sven", "Mario", "Heiko", "Volker", "Lutz", "Detlef", "Rainer", "Ulrich", "Reiner", "Norbert", "Bernd", "Harald", "Roland"],
+            ...["Christian", "Markus", "Martin", "Sebastian", "Dennis", "Alexander", "Tobias", "Marcel", "Daniel", "Patrick", "Philipp", "Florian", "Jan", "Kevin", "David", "Lukas", "Tim", "Felix", "Nico", "Benjamin", "Dominik", "Marco", "Fabian", "Sascha", "Pascal", "René", "Christopher", "Andre", "Mike", "Stephan", "Bastian", "Sandro", "Mirko", "Timo", "Ronny", "Maik", "Enrico", "Karsten", "Ronan", "Falk", "Gunnar", "Ingmar", "Ludger", "Olaf", "Rüdiger", "Tilman", "Volkmar", "Wieland", "Arne", "Björn"].flatMap(i => [i, i, i])
+        ],
+        female: [
+            ...["Karin", "Ingrid", "Helga", "Gisela", "Ursula", "Renate", "Elke", "Monika", "Christa", "Erika", "Hannelore", "Marianne", "Brigitte", "Margot", "Irmgard", "Gerda", "Edith", "Hildegard", "Rosemarie", "Anneliese", "Gertrud", "Lieselotte", "Ilse", "Inge", "Waltraud", "Brunhilde", "Adelheid", "Doris", "Ruth", "Johanna"],
+            ...["Birgit", "Sabine", "Susanne", "Petra", "Gabriele", "Andrea", "Heike", "Angelika", "Martina", "Nicole", "Claudia", "Anja", "Simone", "Tanja", "Katja", "Bettina", "Kerstin", "Ute", "Marion", "Silke", "Cornelia", "Beate", "Dagmar", "Gudrun", "Jutta", "Astrid", "Christine", "Elfriede", "Gerlinde", "Heidi"],
+            ...["Stefanie", "Katrin", "Melanie", "Sandra", "Nadine", "Julia", "Christina", "Jessica", "Yvonne", "Katharina", "Anna", "Sarah", "Laura", "Lisa", "Vanessa", "Annika", "Franziska", "Jennifer", "Mandy", "Isabelle", "Jasmin", "Verena", "Carina", "Daniela", "Saskia", "Corinna", "Manuela", "Bianca", "Stephanie", "Sonja", "Antje", "Britta", "Doreen", "Ines", "Jana", "Kerstin", "Maren", "Silvia", "Sina", "Wiebke", "Alexandra", "Constanze", "Diana", "Esther", "Frauke", "Grit", "Henrike", "Judith", "Kirsten", "Linda"].flatMap(i => [i, i, i])
+        ],
+        last: ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Schulz", "Hoffmann", "Schäfer", "Koch", "Bauer", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun", "Krüger", "Hofmann", "Hartmann", "Lange", "Schmitt", "Werner", "Schmitz", "Krause", "Meier", "Lehmann", "Schmid", "Schulze", "Maier", "Köhler", "Herrmann", "König", "Walter", "Mayer", "Huber", "Kaiser", "Fuchs", "Peters", "Lang", "Scholz", "Möller", "Weiß", "Jung", "Hahn", "Schubert", "Vogel", "Friedrich", "Günther", "Keller", "Winkler", "Frank", "Berger", "Roth", "Beck", "Lorenz", "Baumann", "Franke", "Albrecht", "Schuster", "Simon", "Ludwig", "Böhm", "Winter", "Kraus", "Martin", "Schumacher", "Krämer", "Vogt", "Stein", "Jäger", "Otto", "Sommer", "Groß", "Seidel", "Heinrich", "Brandt", "Haas", "Schreiber", "Graf", "Dietrich", "Ziegler", "Kuhn", "Kühn", "Pohl", "Horn", "Busch", "Thomas", "Sauer", "Arnold", "Wolff", "Pfeiffer", "Ackermann", "Bachmann", "Beyer", "Engel", "Fiedler", "Gebhardt", "Gerber", "Grimm", "Grossmann", "Hanke", "Hennig", "Hering", "Herzog", "Jahn", "Jansen", "Jordan", "Kaufmann", "Kellner", "Kirchner", "Kramer", "Krieger", "Kruse", "Langner", "Linke", "Lohmann", "Ludwig", "Marx", "Maurer", "May", "Meissner", "Metzger", "Naumann", "Noack", "Pfeifer", "Pietsch", "Reuter", "Sattler", "Schilling", "Schlegel", "Schlüter", "Schreiner", "Schroeter", "Seifert", "Stark", "Thiel", "Ullrich", "Urban", "Voigt", "Wenzel", "Wiedemann", "Wiegand", "Zander", "Zeller"]
+    },
+    russian: {
+        male: [
+            ...["Vladimir", "Anatoliy", "Viktor", "Yuriy", "Nikolay", "Ivan", "Mikhail", "Boris", "Gennadiy", "Valeriy", "Vasiliy", "Pyotr", "Leonid", "Grigoriy", "Fyodor", "Oleg", "Semyon", "Konstantin", "Arkadiy", "Vyacheslav", "Yevgeny", "Anatoly", "Valentin", "Vsevolod", "Rostislav", "Iosif", "Pavel", "Alexei", "Dmitri", "Georgiy"],
+            ...["Sergey", "Aleksandr", "Andrey", "Aleksey", "Dmitriy", "Igor", "Roman", "Maksim", "Vitaliy", "Vadim", "Eduard", "Ruslan", "Stanislav", "Yaroslav", "Artur", "Timur", "Gleb", "Denis", "Anton", "Arseniy", "Stepan", "Matvey", "Ilya", "Kirill", "Yegor", "Gennady", "Nikita", "Oleg", "Pavel", "Roman"],
+            ...["Artyom", "Danil", "Vladislav", "Timofey", "Marat", "Bogdan", "David", "Mark", "Lev", "German", "Miron", "Platon", "Tikhon", "Zakhar", "Demid", "Nazar", "Rodion", "Savva", "Filipp", "Yaromir", "Svyatoslav", "Miroslav", "Ratibor", "Dobrynya", "Radomir", "Luka", "Klim", "Yefim", "Prokhor", "Taras", "Foma", "Ignat", "Gordey", "Demyan", "Potap", "Saveliy", "Trofim", "Yermolai", "Yelisey", "Kuzma", "Lavrentiy", "Panteley", "Spiridon", "Fedot", "Frol", "Ilya", "Daniil", "Maxim", "Timur", "Ruslan"].flatMap(i => [i, i, i])
+        ],
+        female: [
+            ...["Valentina", "Galina", "Lyudmila", "Nina", "Tamara", "Lidiya", "Tatyana", "Nadezhda", "Lyubov", "Zoya", "Raisa", "Antonina", "Margarita", "Klavdiya", "Yevgeniya", "Rimma", "Vera", "Alla", "Inna", "Roza", "Faina", "Larisa", "Alevtina", "Kapitolina", "Praskovya", "Anna", "Maria", "Olga", "Ekaterina", "Svetlana"],
+            ...["Yelena", "Natalya", "Irina", "Yuliya", "Oksana", "Viktoriya", "Liliya", "Zhanna", "Inga", "Elvira", "Alisa", "Regina", "Diana", "Elina", "Renata", "Zemfira", "Aida", "Liana", "Stella", "Anzhelika", "Veronika", "Polina", "Kristina", "Yana", "Mila"],
+            ...["Anastasiya", "Darya", "Aleksandra", "Yelizaveta", "Sofiya", "Arina", "Valeriya", "Ulyana", "Milana", "Varvara", "Eva", "Miroslava", "Vasilisa", "Yeva", "Karina", "Taisiya", "Zlata", "Anfisa", "Lada", "Rada", "Yaroslava", "Nika", "Kira", "Vladislava", "Snezhana", "Stanislava", "Milena", "Yeseniya", "Zarina", "Aglaya", "Agnessa", "Bozhena", "Vlasta", "Glafira", "Dominika", "Ilona", "Marta", "Nonna", "Pelageya", "Roksana", "Serafima", "Alisa", "Angelina", "Veronika", "Vlada", "Darina", "Eva", "Zlata", "Inessa", "Kira"].flatMap(i => [i, i, i])
+        ],
+        last: ["Smirnov", "Ivanov", "Kuznetsov", "Popov", "Sokolov", "Lebedev", "Kozlov", "Novikov", "Morozov", "Petrov", "Volkov", "Solovyov", "Vasilyev", "Zaytsev", "Pavlov", "Semyonov", "Golubev", "Vinogradov", "Bogdanov", "Vorobyov", "Fyodorov", "Mikhaylov", "Belyayev", "Tarasov", "Belov", "Komarov", "Orlov", "Kiselyov", "Makarov", "Andreyev", "Kovalyov", "Ilyin", "Gusev", "Titov", "Kuzmin", "Stepanov", "Alekseyev", "Grigoryev", "Romanov", "Melnikov", "Shcherbakov", "Blinov", "Kolesnikov", "Drozdov", "Ignatyev", "Sidorov", "Osipov", "Matveyev", "Zakharov", "Borisov", "Korolyov", "Gerasimov", "Lazarev", "Yakovlev", "Medvedev", "Ershov", "Nikitin", "Sorokin", "Karpov", "Polyakov", "Krylov", "Maksimov", "Savelyev", "Loginov", "Gavrilov", "Filatov", "Shiryayev", "Dmitriyev", "Shestakov", "Antonov", "Frolov", "Nikiforov", "Denisov", "Arkhipov", "Gorbunov", "Bykov", "Kondratyev", "Baranov", "Nikolaev", "Voronov", "Filimonov", "Davydov", "Zhukov", "Tsvetkov", "Kalinin", "Prokhorov", "Shevchenko", "Maslov", "Isakov", "Chernov", "Abramov", "Martynov", "Gushchin", "Yefimov", "Fedotov", "Shilov", "Kolesnichenko", "Lukin", "Nazarov", "Tikhonov", "Troitsky", "Bogatov", "Yermakov", "Knyazev", "Burov", "Fokin", "Sysoev", "Panov", "Dorofeyev", "Yudin", "Belousov", "Utkin", "Kornilov", "Likhachyov", "Chebotaryov", "Sazonov", "Mironov", "Agapov", "Aksyonov", "Artyomov", "Blokhin", "Veselov", "Galkin", "Gromov", "Zharov", "Zimin", "Kabanov", "Kalashnikov", "Konovalov", "Kopylov", "Korotkov", "Kravtsov", "Kudryavtsev", "Kulikov", "Larionov", "Limonov", "Losev", "Maltsev", "Molchanov", "Nosov", "Panfilov", "Ponomaryov", "Rodionov", "Samoylov", "Savin", "Suvorov", "Tretyakov", "Ushakov", "Fadeyev", "Khokhlov", "Tsaryov", "Cherkasov", "Shubin", "Yusupov", "Yashin"]
+    },
+    swedish: {
+        male: [
+            ...["Lars", "Anders", "Mikael", "Johan", "Per", "Peter", "Karl", "Erik", "Jan", "Daniel", "Fredrik", "Andreas", "Magnus", "Mattias", "Henrik", "Patrik", "Niklas", "Stefan", "Jonas", "Thomas", "Ulf", "Christer", "Roger", "Roland", "Sten", "Sven", "Gunnar", "Olof", "Bo", "Nils"],
+            ...["Leif", "Bengt", "Hans", "Kurt", "Åke", "Rolf", "Stig", "Göran", "Bertil", "Kjell", "Ingemar", "Lennart", "Arne", "Håkan", "Björn", "Kent", "Tommy", "Morgan", "Joakim", "Robert", "Krister", "Claes", "Benny", "Conny", "Dennis"],
+            ...["Oskar", "Viktor", "Gustav", "Filip", "Simon", "Anton", "Emil", "Isak", "Albin", "Axel", "Elias", "Hugo", "Leo", "Lucas", "Liam", "Noah", "William", "Oliver", "Adam", "Alexander", "Marcus", "Jesper", "Rasmus", "Martin", "Rickard", "Joacim", "Christoffer", "Linus", "Tobias", "Pontus", "David", "Joel", "Jonathan", "Ludvig", "Max", "Kevin", "Melker", "Casper", "Vincent", "Theodor", "Elliot", "Alfred", "Arvid", "Edvin", "Hampus", "Måns", "Valter", "Alvin", "Love", "Viggo"].flatMap(i => [i, i, i])
+        ],
+        female: [
+            ...["Maria", "Anna", "Eva", "Kristina", "Karin", "Elisabeth", "Birgitta", "Marie", "Ingrid", "Linnéa", "Margareta", "Kerstin", "Lena", "Helena", "Susanne", "Ulla", "Gunilla", "Barbro", "Camilla", "Sofia", "Marianne", "Iréne", "Monica", "Anita", "Berit", "Gudrun", "Märta", "Elsa", "Alice", "Astrid"],
+            ...["Inger", "Yvonne", "Agneta", "Annika", "Carina", "Pia", "Lotta", "Gun", "Maj", "Solveig", "Britt", "Siv", "Rut", "Doris", "Gerd", "Sonja", "Maud", "Ann-Christin", "Åsa", "Cecilia", "Malin", "Linda", "Jenny", "Therese", "Jessica", "Annelie", "Charlotte", "Elin", "Frida", "Hanna"],
+            ...["Emma", "Johanna", "Ida", "Sara", "Josefin", "Sandra", "Rebecca", "Amanda", "Matilda", "Julia", "Klara", "Ebba", "Maja", "Alva", "Wilma", "Agnes", "Felicia", "Isabelle", "Moa", "Tilda", "Olivia", "Cornelia", "Stina", "Lovisa", "Jonna", "Fanny", "Nathalie", "Ronja", "Saga", "Tove", "Vendela", "Eleonora", "Freja", "Hedda", "Lova", "My", "Noomi", "Signe", "Svea", "Tyra", "Vera", "Hilma", "Juni", "Lykke", "Stella", "Elvira", "Isabella", "Molly", "Selma", "Iris"].flatMap(i => [i, i, i])
+        ],
+        last: ["Andersson", "Johansson", "Karlsson", "Nilsson", "Eriksson", "Larsson", "Olsson", "Persson", "Svensson", "Gustafsson", "Pettersson", "Jonsson", "Jansson", "Hansson", "Bengtsson", "Jönsson", "Lindberg", "Jakobsson", "Magnusson", "Olofsson", "Lindström", "Lindqvist", "Lindgren", "Axelsson", "Bergström", "Lundberg", "Lundgren", "Lundqvist", "Mattsson", "Berglund", "Fredriksson", "Sandberg", "Henriksson", "Forsberg", "Sjöberg", "Wallin", "Engström", "Eklund", "Danielsson", "Håkansson", "Lundin", "Gunnarsson", "Björk", "Bergman", "Holm", "Wikström", "Samuelsson", "Isaksson", "Fransson", "Nyström", "Holmberg", "Arvidsson", "Löfgren", "Söderberg", "Nyberg", "Blomqvist", "Claesson", "Mårtensson", "Eliasson", "Pålsson", "Viklund", "Björklund", "Berggren", "Sandström", "Lundström", "Holmgren", "Ström", "Hellström", "Dahlberg", "Hedlund", "Sundberg", "Ekström", "Åberg", "Falk", "Blom", "Norberg", "Åström", "Holmqvist", "Lund", "Hedman", "Dahl", "Sundström", "Ek", "Hellman", "Palm", "Stenberg", "Vikström", "Cederholm", "Dahlgren", "From", "Hedberg", "Hjelm", "Holst", "Högberg", "Hägglund", "Ivarsson", "Jonasson", "Kjellberg", "Lundell", "Melin", "Norén", "Nyholm", "Nygren", "Ohlson", "Palmér", "Ring", "Ståhl", "Sundqvist", "Svanberg", "Söderlund", "Törnqvist", "Wahlberg", "Wennberg", "Westerlund", "Åkesson", "Öberg", "Öhman", "Östlund", "Strid", "Boström", "Edlund", "Fagerström", "Granlund", "Haglund", "Hedman", "Hjort", "Holmström", "Hultgren", "Höglander", "Israelsson", "Kihlberg", "Lagerkvist", "Lidén", "Löfquist", "Malmberg", "Marklund", "Molander", "Myrman", "Nordström", "Nykvist", "Olausson", "Påhlsson", "Qvist", "Renberg", "Rydberg", "Stjernberg", "Strandberg", "Söderholm", "Tapper", "Westerberg", "Ågren", "Österberg"]
+    }
+};
 
 // ===================================================================================
 // --- GAME DATA ---
@@ -180,7 +440,7 @@ const rollCheck = (attrDie, skillDie) => {
 const getDie = (level) => level ? gameData.ATTRIBUTE_DICE[level] : null;
 
 const initialCharacter = {
-    name: '', nationality: '', age: 18, cuf: 'D', rank: null, isLocal: false,
+    name: '', nationality: 'american', age: 18, cuf: 'D', rank: null, isLocal: false,
     attributes: { str: 'C', agl: 'C', int: 'C', emp: 'C' },
     skills: {}, specialties: [], careerPath: [], gear: [],
     rads: 0,
@@ -312,16 +572,35 @@ const CharacterStatus = memo(({ character, skillPreview }) => (
 // ===================================================================================
 
 const Step1_InitialSetup = memo(({ character, setCharacter, nextStep }) => {
-    // Optimization: State colocation. Keep form state local to this component.
+    // State for this component
     const [localName, setLocalName] = useState(character.name);
-    const [localNationality, setLocalNationality] = useState(character.nationality);
+    const [selectedNationality, setSelectedNationality] = useState(character.nationality);
+    const [otherNationality, setOtherNationality] = useState('');
     const [localIsLocal, setLocalIsLocal] = useState(character.isLocal);
     const [localAttributes, setLocalAttributes] = useState(character.attributes);
     const [attributeIncreases, setAttributeIncreases] = useState({ rolls: [], total: 0 });
+    const [gender, setGender] = useState('male'); // 'male' or 'female'
+    const isRandomDisabled = selectedNationality === 'other';
 
     useEffect(() => {
         setAttributeIncreases(twoD3());
     }, []);
+
+    // Function to generate a random name
+    const handleGenerateName = () => {
+        const nat = selectedNationality;
+        if (!nat || !namesByNationality[nat]) {
+            return; // Button is disabled if this is the case, but good to have a safeguard.
+        }
+        
+        const nameData = namesByNationality[nat];
+        const firstNamePool = nameData[gender];
+        
+        const firstName = firstNamePool[Math.floor(Math.random() * firstNamePool.length)];
+        const lastName = nameData.last[Math.floor(Math.random() * nameData.last.length)];
+
+        setLocalName(`${firstName} ${lastName}`);
+    };
 
     const handleAttrChange = (attr, direction) => {
         const currentVal = localAttributes[attr].charCodeAt(0);
@@ -348,23 +627,80 @@ const Step1_InitialSetup = memo(({ character, setCharacter, nextStep }) => {
     };
 
     const handleContinue = () => {
-        // Update the parent state only once on submission
+        const finalNationality = selectedNationality === 'other' ? otherNationality : selectedNationality;
         setCharacter(prev => ({
             ...prev,
             name: localName,
-            nationality: localNationality,
+            nationality: finalNationality,
             isLocal: localIsLocal,
             attributes: localAttributes
         }));
         nextStep();
     };
+    
+    const isContinueDisabled = !localName || 
+                             (selectedNationality === 'other' ? !otherNationality : !selectedNationality) || 
+                             attributeIncreases.total > 0;
+                             
+    const nationalityOptions = useMemo(() => {
+        const baseOptions = [
+            { value: 'american', label: 'American' },
+            { value: 'german', label: 'German' },
+            { value: 'polish', label: 'Polish' },
+            { value: 'russian', label: 'Russian' },
+            { value: 'swedish', label: 'Swedish' },
+        ];
+        baseOptions.sort((a, b) => a.label.localeCompare(b.label));
+        return [...baseOptions, { value: 'other', label: 'Other...' }];
+    }, []);
 
     return (
         <Card>
             <h2 className="text-2xl font-display text-yellow-400 mb-4">Step 1: Initial Setup</h2>
             <div className="space-y-4">
-                <Input value={localName} onChange={(e) => setLocalName(e.target.value)} placeholder="Character Name" />
-                <Input value={localNationality} onChange={(e) => setLocalNationality(e.target.value)} placeholder="Nationality" />
+                <div className="flex items-center space-x-2">
+                    <Input value={localName} onChange={(e) => setLocalName(e.target.value)} placeholder="Character Name" />
+                     <div className="flex-shrink-0 flex bg-zinc-700 border border-zinc-600">
+                        <button 
+                            onClick={() => setGender('male')} 
+                            className={`px-3 py-1 text-xs transition-colors ${gender === 'male' ? 'bg-yellow-600 text-zinc-900' : 'bg-transparent text-zinc-300'} disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed`}
+                            disabled={isRandomDisabled}
+                        >
+                            M
+                        </button>
+                        <button 
+                            onClick={() => setGender('female')} 
+                            className={`px-3 py-1 text-xs transition-colors ${gender === 'female' ? 'bg-yellow-600 text-zinc-900' : 'bg-transparent text-zinc-300'} disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed`}
+                            disabled={isRandomDisabled}
+                        >
+                            F
+                        </button>
+                    </div>
+                    <Button 
+                        onClick={handleGenerateName} 
+                        className="flex-shrink-0" 
+                        title={isRandomDisabled ? "Select a nationality to generate a name" : "Generate a random name"}
+                        disabled={isRandomDisabled}
+                    >
+                        Random
+                    </Button>
+                </div>
+                
+                <Select
+                    value={selectedNationality}
+                    onChange={e => setSelectedNationality(e.target.value)}
+                    options={nationalityOptions}
+                    placeholder="Select Nationality"
+                />
+
+                {selectedNationality === 'other' && (
+                    <Input 
+                        value={otherNationality} 
+                        onChange={(e) => setOtherNationality(e.target.value)} 
+                        placeholder="Enter custom nationality" 
+                    />
+                )}
+
                 <label className="flex items-center space-x-2">
                     <input type="checkbox" checked={localIsLocal} onChange={e => setLocalIsLocal(e.target.checked)} className="form-checkbox h-5 w-5 text-yellow-600 bg-zinc-900 border-zinc-600 rounded-none focus:ring-yellow-500"/>
                     <span>Is your character a local in the game setting (e.g., Polish in Poland)?</span>
@@ -389,7 +725,7 @@ const Step1_InitialSetup = memo(({ character, setCharacter, nextStep }) => {
                     </div>
                     <Button onClick={tradeForIncrease} disabled={Object.values(localAttributes).includes('D')} className="mt-4 w-full bg-zinc-600 hover:bg-zinc-700">Decrease one 'C' to 'D' for 1 extra increase</Button>
                 </div>
-                <Button onClick={handleContinue} disabled={!localName || !localNationality || attributeIncreases.total > 0}>Continue to Childhood</Button>
+                <Button onClick={handleContinue} disabled={isContinueDisabled}>Continue to Childhood</Button>
             </div>
         </Card>
     );
@@ -1087,9 +1423,7 @@ const Step5_Finalize = memo(({ character, setCharacter, nextStep }) => {
 
 const CharacterSheet = memo(({ character, startOver }) => {
 
-    const handleSave = async () => {
-        const { default: jsPDF } = await import('jspdf');
-        
+    const handleSave = () => {
         const doc = new jsPDF();
         const margin = 10;
         let y = 15;
@@ -1116,7 +1450,8 @@ const CharacterSheet = memo(({ character, startOver }) => {
         
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
-        doc.text(`${character.nationality} | Age: ${character.age}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+        const formattedNationality = character.nationality.charAt(0).toUpperCase() + character.nationality.slice(1);
+        doc.text(`${formattedNationality} | Age: ${character.age}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
         y += 10;
 
         const topSectionY = y;
@@ -1272,12 +1607,14 @@ const CharacterSheet = memo(({ character, startOver }) => {
         doc.save(`T2K4E - ${character.name.replace(/\s/g, '_') || 'character'}.pdf`);
     };
 
+    const formattedNationality = character.nationality.charAt(0).toUpperCase() + character.nationality.slice(1);
+
     return (
         <>
             <Card className="max-w-4xl mx-auto font-mono">
                 <div className="text-center mb-6">
                     <h1 className="text-4xl font-display text-yellow-400">{character.name}</h1>
-                    <p className="text-lg text-zinc-300">{character.nationality} | Age: {character.age}</p>
+                    <p className="text-lg text-zinc-300">{formattedNationality} | Age: {character.age}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
