@@ -38,7 +38,7 @@ const namesByNationality = {
             "Mickey", "Miguel", "Mike", "Miles", "Milton", "Morris", "Nathaniel", "Neal", "Nelson", "Nick", 
             "Noel", "Oliver", "Ollie", "Omar", "Oscar", "Owen", "Rafael", "Randolph", "Rob", "Robbie", "Roberto", 
             "Rocky", "Rod", "Roland", "Royal", "Ruben", "Rudolph", "Salvador", "Sam", "Saul", "Sebastian", 
-            "Seth", "Steve", "Stuart", "Sylvester", "Terryf", "Theodore", "Tim", "Tom", "Tommy", "Vernon", 
+            "Seth", "Steve", "Stuart", "Sylvester", "Terry", "Theodore", "Tim", "Tom", "Tommy", "Vernon", 
             "Virgil", "Wade", "Wyatt",
             // ~325 names from 1970s & 1980s (Youngest, most common)
             "Matthew", "Joshua", "Justin", "Andrew", "Ryan", "Jonathan", "Adam", "Nicholas", "Brandon", "Jacob", 
