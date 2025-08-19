@@ -38,7 +38,7 @@ const namesByNationality = {
             "Mickey", "Miguel", "Mike", "Miles", "Milton", "Morris", "Nathaniel", "Neal", "Nelson", "Nick", 
             "Noel", "Oliver", "Ollie", "Omar", "Oscar", "Owen", "Rafael", "Randolph", "Rob", "Robbie", "Roberto", 
             "Rocky", "Rod", "Roland", "Royal", "Ruben", "Rudolph", "Salvador", "Sam", "Saul", "Sebastian", 
-            "Seth", "Steve", "Stuart", "Sylvester", "Terri", "Theodore", "Tim", "Tom", "Tommy", "Vernon", 
+            "Seth", "Steve", "Stuart", "Sylvester", "Terryf", "Theodore", "Tim", "Tom", "Tommy", "Vernon", 
             "Virgil", "Wade", "Wyatt",
             // ~325 names from 1970s & 1980s (Youngest, most common)
             "Matthew", "Joshua", "Justin", "Andrew", "Ryan", "Jonathan", "Adam", "Nicholas", "Brandon", "Jacob", 
@@ -59,7 +59,7 @@ const namesByNationality = {
             "Ricardo", "Rick", "Rickey", "Ricky", "Rob", "Robbie", "Roberto", "Rocky", "Rod", "Rodney", "Roland", 
             "Ron", "Ronnie", "Ross", "Royal", "Ruben", "Rudolph", "Russell", "Salvador", "Sam", "Saul", 
             "Sebastian", "Seth", "Shane", "Shaun", "Shawn", "Sidney", "Stanley", "Steve", "Stuart", "Sylvester", 
-            "Ted", "Terri", "Theodore", "Tim", "Todd", "Tom", "Tommy", "Tony", "Travis", "Troy", "Tyrone", 
+            "Ted", "Terry", "Theodore", "Tim", "Todd", "Tom", "Tommy", "Tony", "Travis", "Troy", "Tyrone", 
             "Vernon", "Victor", "Vincent", "Virgil", "Wade", "Warren", "Wesley", "Willard", "Wyatt"
         ],
         female: [
@@ -82,7 +82,7 @@ const namesByNationality = {
             "Kathryn", "Sherry", "Allison", "Alyssa", "Ana", "Angel", "Anita", "Anne", "Annette", "Audrey", 
             "Bernice", "Bertha", "Bessie", "Beth", "Billie", "Bonnie", "Brandi", "Brooke", "Carla", "Carole", 
             "Caroline", "Carrie", "Cathy", "Charlene", "Charlotte", "Chelsea", "Christy", "Cindy", "Clara", 
-            "Claudia", "Colleen", "Courtney", "Daisy", "Dana", "Darla", "Darlene", "Deanna", "Debbie", "Destiny", 
+            "Claudia", "Colleen", "Courtney", "Daisy", "Dana", "Darla", "Darlene", "Deanna", "Debbie", "Daphne", 
             "Dianne", "Dolores", "Dora", "Edith", "Edna", "Eileen", "Elaine", "Eleanor", "Ella", "Elsie", 
             "Erika", "Erma", "Esther", "Ethel", "Eunice", "Eva", "Faith", "Faye", "Felicia", "Florence", 
             "Freda", "Gayle", "Geneva", "Genevieve", "Georgia", "Geraldine", "Gertrude", "Ginger", "Gladys", 
