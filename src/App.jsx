@@ -982,15 +982,12 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
                  if (newCuf !== 'A') newCuf = String.fromCharCode(newCuf.charCodeAt(0) - 1);
             }
 	    if (selectedCareerData.type === 'military' && newRank) {
-            	const currentRankIndex = gameData.US_ARMY_RANKS.indexOf(newRank);
-            	const isAtMaxEnlistedRank = newRank === 'Sergeant Major';
-            	const isInOfficerCareer = selectedCareerData.name === 'Officer';
+                const currentRankIndex = gameData.US_ARMY_RANKS.indexOf(newRank);
 
-            	// Only promote past Sergeant Major if in the Officer career.
-            	if (isAtMaxEnlistedRank && !isInOfficerCareer) {
-                    // Rank is capped, do nothing.
-            	} else if (currentRankIndex < gameData.US_ARMY_RANKS.length - 1) {
-                    // Proceed with normal promotion for all other cases.
+                // A character can be promoted if they are not a Sergeant Major, OR if they are an Officer.
+                const canBePromoted = newRank !== 'Sergeant Major' || selectedCareerData.name === 'Officer';
+
+                if (canBePromoted && currentRankIndex < gameData.US_ARMY_RANKS.length - 1) {
                     newRank = gameData.US_ARMY_RANKS[currentRankIndex + 1];
                 }
             }
