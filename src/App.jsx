@@ -1669,17 +1669,23 @@ const CharacterSheet = memo(({ character, startOver }) => {
                 </div>
 
 		<div className="mb-6">
-   		    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">SPECIALTIES</h3>
+    		    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">SPECIALTIES</h3>
     		    <div className="space-y-2">
         		{character.specialties.map((spec, index) => {
-            		    // Get the base name to look up the description (handles "Linguist (Language)")
             		    const baseName = spec.split(' (')[0];
             		    const description = gameData.SPECIALTY_DESCRIPTIONS[baseName] || 'No description found.';
             
-                 	    return (
-               		        <p key={index}>
-                    	            <strong className="font-bold">{spec}:</strong> {description}
-                	        </p>
+            		    return (
+                		// Each specialty is its own flex container
+                		<div key={index} className="flex gap-x-3">
+                    		    {/* Column 1: The specialty name, which now dictates its own width */}
+				    <div className="whitespace-nowrap">
+    					<span className="text-zinc-300">• </span>
+    					<span className="font-bold text-yellow-500">{spec}:</span>
+				    </div>
+                    		    {/* Column 2: The description, which wraps relative to its own start */}
+                    		    <div>{description}</div>
+                		</div>
             		    );
         		})}
     		    </div>
