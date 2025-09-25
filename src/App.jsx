@@ -1670,63 +1670,74 @@ const CharacterSheet = memo(({ character, startOver }) => {
 
 		<div className="mb-6">
     		    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">SPECIALTIES</h3>
-    		    <div className="space-y-2">
+    		    <div>
         		{character.specialties.map((spec, index) => {
             		    const baseName = spec.split(' (')[0];
             		    const description = gameData.SPECIALTY_DESCRIPTIONS[baseName] || 'No description found.';
             
             		    return (
-                		// Each specialty is its own flex container
-                		<div key={index} className="flex gap-x-3">
-                    		    {/* Column 1: The specialty name, which now dictates its own width */}
-				    <div className="whitespace-nowrap">
-    					<span className="text-zinc-300">• </span>
-    					<span className="font-bold text-yellow-500">{spec}:</span>
-				    </div>
-                    		    {/* Column 2: The description, which wraps relative to its own start */}
-                    		    <div>{description}</div>
+                		<div key={index} className="flex gap-x-2">
+                    		    {/* Bullet Column */}
+                    		    <div>•</div>
+                    		    {/* Content Column */}
+                    		    <div>
+                        		<strong className="font-bold text-yellow-500">{spec}:</strong> {description}
+                    		    </div>
                 		</div>
             		    );
         		})}
     		    </div>
+		</div>        
+
+		<div className="mb-6">
+    		    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">GEAR</h3>
+    		    <div>
+        		{character.gear.map((item, i) => (
+            		    <div key={i} className="flex gap-x-2">
+                		<div>•</div>
+                		<div>{item}</div>
+            		    </div>
+        		))}
+        		<div className="flex gap-x-2">
+            		    <div>•</div>
+            		    <div>D6 rations of food, D6 rations of water, D6 rounds of ammo</div>
+        		</div>
+    		    </div>
 		</div>
-                
-                <div className="mb-6">
-                    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">GEAR</h3>
-                    <ul className="list-disc list-inside">
-                        {character.gear.map((item, i) => <li key={i}>{item}</li>)}
-                        <li>D6 rations of food, D6 rations of water, D6 rounds of ammo</li>
-                    </ul>
-                </div>
 
                 <div className="mb-6">
-                    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">CAREER PATH</h3>
-                    <ul className="list-disc list-inside">
-                        {character.careerPath.map((term, i) => {
-                            let label = `Term ${i}`;
-                            if (term.career.type === 'Childhood') {
-                                label = 'Childhood';
-                            } else if (term.career.name === 'At War') {
-                                label = 'At War';
-                            }
-                            
-                            let careerName = term.career.name;
-                            if (term.career.name === 'Officer' && term.functionalArea) {
-                                careerName = `Officer [${term.functionalArea}]`;
-                            } else if (term.career.name === 'At War') {
-                                 careerName = '';
-                            }
+    		    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">CAREER PATH</h3>
+    		    <div>
+        		{character.careerPath.map((term, i) => {
+            		    let label = `Term ${i}`;
+            		    if (term.career.type === 'Childhood') {
+                		label = 'Childhood';
+            		    } else if (term.career.name === 'At War') {
+                		label = 'At War';
+            		    }
+            
+            		    let careerName = term.career.name;
+            		    if (term.career.name === 'Officer' && term.functionalArea) {
+                	        careerName = `Officer [${term.functionalArea}]`;
+            		    } else if (term.career.name === 'At War') {
+                 	        careerName = '';
+            		    }
 
-                            const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
+            		    const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
 
-                            return (
-                                <li key={i}>
-                                    <strong>{label}:</strong> {careerName ? `${careerName} ` : ''}({cleanedSkills.join(', ')}) {term.specialtyGained && `-> ${term.specialtyGained}`}
-                                </li>
-                            )
-                        })}
-                    </ul>
-                </div>
+            		    return (
+                	        <div key={i} className="flex gap-x-2">
+                    		    {/* Bullet Column */}
+                    	    	    <div>•</div>
+                    	    	    {/* Content Column */}
+                    	    	    <div>
+                        	        <strong className="font-bold">{label}:</strong> {careerName ? `${careerName} ` : ''}({cleanedSkills.join(', ')}) {term.specialtyGained && `-> ${term.specialtyGained}`}
+                    		    </div>
+                	        </div>
+            		    );
+        	        })}
+    		    </div>
+		</div>
             </Card>
             <div className="flex space-x-4 mt-6">
                 <Button onClick={handleSave} disabled={isSaving} className="w-full bg-green-700 hover:bg-green-800">
