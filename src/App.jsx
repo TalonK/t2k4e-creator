@@ -1180,7 +1180,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
                                 {isFirstMilitaryTerm && <p className="text-yellow-400 font-bold">First military term: One increase MUST be Ranged Combat.</p>}
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     {availableSkillButtons.map(s => (
-                                        <Button key={s} onClick={() => handleSkillIncrease(s)} disabled={skillPreview[s] === 'A' || skillIncreases.length >= 2 || (isFirstMilitaryTerm && s !== 'Ranged Combat' && !skillIncreases.includes('Ranged Combat'))} title={gameData.SKILL_DESCRIPTIONS[s]}>{s} ({gameData.SKILLS_DATA[s].toUpperCase()})</Button>
+                                        <Button key={s} onClick={() => handleSkillIncrease(s)} disabled={skillPreview[s] === 'A' || skillIncreases.length >= 2 || (isFirstMilitaryTerm && s !== 'Ranged Combat' && !skillIncreases.includes('Ranged Combat') && character.skills['Ranged Combat'] !== 'A')} title={gameData.SKILL_DESCRIPTIONS[s]}>{s} ({gameData.SKILLS_DATA[s].toUpperCase()})</Button>
                                     ))}
                                 </div>
                                 {skillIncreases.length > 0 && (
