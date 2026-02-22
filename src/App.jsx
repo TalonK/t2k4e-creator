@@ -192,7 +192,7 @@ const namesByNationality = {
             "Schafer", "Hutchins", "Steiner", "Blanton", "Woodard", "Mackey", "Coley", "Tidwell", "Cannon", 
             "Stover", "Bliss", "Slone", "Roberson", "Gay", "McKay", "Fuchs", "Staley", "Lowery", "Norton", 
             "Mesa", "Keyes", "Newsome", "Slade", "Lilly", "Sheehan", "Hester", "Vinson", "Bello", "Mosley", 
-            "Alston", "Hood", "Fountain", "Kellogg", "Kessler", "Acosta", "Foreman", "Denton", "Redd", "Pettit", 
+            "Alston", "Hood", "Fountaine", "Kellogg", "Kessler", "Acosta", "Foreman", "Denton", "Redd", "Pettit", 
             "Elmore", "Rankin", "Bullock", "Nolan", "Pagan", "Chin", "Talbot", "Coates", "Bobo", "Metcalf", 
             "Harrington", "Macon", "Ritchie", "Peck", "Goldman", "Cheung", "Bowling", "Hilliard", "Godfrey", 
             "Myles", "Medrano", "Ocampo", "Self", "Tolbert", "Finney", "Mares", "Flanagan", "Crockett", "Lugo", 
@@ -234,7 +234,7 @@ const namesByNationality = {
         ],
         last: ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Schulz", "Hoffmann", "Schäfer", "Koch", "Bauer", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun", "Krüger", "Hofmann", "Hartmann", "Lange", "Schmitt", "Werner", "Schmitz", "Krause", "Meier", "Lehmann", "Schmid", "Schulze", "Maier", "Köhler", "Herrmann", "König", "Walter", "Mayer", "Huber", "Kaiser", "Fuchs", "Peters", "Lang", "Scholz", "Möller", "Weiß", "Jung", "Hahn", "Schubert", "Vogel", "Friedrich", "Günther", "Keller", "Winkler", "Frank", "Berger", "Roth", "Beck", "Lorenz", "Baumann", "Franke", "Albrecht", "Schuster", "Simon", "Ludwig", "Böhm", "Winter", "Kraus", "Martin", "Schumacher", "Krämer", "Vogt", "Stein", "Jäger", "Otto", "Sommer", "Groß", "Seidel", "Heinrich", "Brandt", "Haas", "Schreiber", "Graf", "Dietrich", "Ziegler", "Kuhn", "Kühn", "Pohl", "Horn", "Busch", "Thomas", "Sauer", "Arnold", "Wolff", "Pfeiffer", "Ackermann", "Bachmann", "Beyer", "Engel", "Fiedler", "Gebhardt", "Gerber", "Grimm", "Grossmann", "Hanke", "Hennig", "Hering", "Herzog", "Jahn", "Jansen", "Jordan", "Kaufmann", "Kellner", "Kirchner", "Kramer", "Krieger", "Kruse", "Langner", "Linke", "Lohmann", "Ludwig", "Marx", "Maurer", "May", "Meissner", "Metzger", "Naumann", "Noack", "Pfeifer", "Pietsch", "Reuter", "Sattler", "Schilling", "Schlegel", "Schlüter", "Schreiner", "Schroeter", "Seifert", "Stark", "Thiel", "Ullrich", "Urban", "Voigt", "Wenzel", "Wiedemann", "Wiegand", "Zander", "Zeller"]
     },
-    russian: {
+    soviet: {
         male: [
             ...["Vladimir", "Anatoliy", "Viktor", "Yuriy", "Nikolay", "Ivan", "Mikhail", "Boris", "Gennadiy", "Valeriy", "Vasiliy", "Pyotr", "Leonid", "Grigoriy", "Fyodor", "Oleg", "Semyon", "Konstantin", "Arkadiy", "Vyacheslav", "Yevgeny", "Anatoly", "Valentin", "Vsevolod", "Rostislav", "Iosif", "Pavel", "Alexei", "Dmitri", "Georgiy"],
             ...["Sergey", "Aleksandr", "Andrey", "Aleksey", "Dmitriy", "Igor", "Roman", "Maksim", "Vitaliy", "Vadim", "Eduard", "Ruslan", "Stanislav", "Yaroslav", "Artur", "Timur", "Gleb", "Denis", "Anton", "Arseniy", "Stepan", "Matvey", "Ilya", "Kirill", "Yegor", "Gennady", "Nikita", "Oleg", "Pavel", "Roman"],
@@ -649,7 +649,7 @@ const Step1_InitialSetup = memo(({ character, setCharacter, nextStep }) => {
             { value: 'american', label: 'American' },
             { value: 'german', label: 'German' },
             { value: 'polish', label: 'Polish' },
-            { value: 'russian', label: 'Russian' },
+            { value: 'soviet', label: 'Soviet' },
             { value: 'swedish', label: 'Swedish' },
         ];
         baseOptions.sort((a, b) => a.label.localeCompare(b.label));
