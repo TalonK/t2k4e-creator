@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import jsPDF from 'jspdf';
 import './Inter_18pt-Regular-normal.js';
 import './Inter_18pt-Bold-bold.js';
@@ -451,6 +451,19 @@ const initialCharacter = {
     hasMilitaryService: false
 };
 
+const formatCareerPathLabelParts = (term, i) => {
+    if (term.career.type === 'Childhood') {
+        return { main: 'Childhood', age: '' };
+    }
+    if (term.career.name === 'At War') {
+        return { main: 'At War', age: term.ageStart != null ? ` (Age ${term.ageStart})` : '' };
+    }
+    return {
+        main: `Term ${i}`,
+        age: term.ageStart != null && term.ageEnd != null ? ` (Age ${term.ageStart}-${term.ageEnd})` : ''
+    };
+};
+
 // ===================================================================================
 // --- STATIC & UI COMPONENTS (MEMOIZED) ---
 // ===================================================================================
@@ -520,7 +533,7 @@ const Select = memo(({ value, onChange, options, placeholder, disabled = false, 
     </select>
 ));
 
-const CharacterStatus = memo(({ character, skillPreview }) => (
+const CharacterStatus = memo(({ character, skillPreview, displayRank = character.rank }) => (
     <Card className="mb-6">
         <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">CHARACTER STATUS</h3>
         <div className="space-y-4">
@@ -529,8 +542,8 @@ const CharacterStatus = memo(({ character, skillPreview }) => (
                  <div className="grid grid-cols-2 gap-2">
                     {Object.entries(character.attributes).map(([key, val]) => <p key={key}><span className="font-bold uppercase">{key}:</span> {val} ({gameData.ATTRIBUTE_DICE[val]})</p>)}
                 </div>
-                <p className="mt-2"><span className="font-bold">CUF:</span> {character.cuf}</p>
-                {character.rank && <p><span className="font-bold">Rank:</span> {character.rank}</p>}
+                <p className="mt-2"><span className="font-bold">CUF:</span> {character.cuf} ({gameData.ATTRIBUTE_DICE[character.cuf]})</p>
+                {displayRank && <p><span className="font-bold">Rank:</span> {displayRank}</p>}
             </div>
             <div>
                 <h4 className="font-bold text-lg font-display text-yellow-500">Skills</h4>
@@ -811,6 +824,15 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
     const [showWarModal, setShowWarModal] = useState(false);
     const [warModalInfo, setWarModalInfo] = useState({ message: '', conscriptionMessage: '' });
     const [isDuplicateSpecialty, setIsDuplicateSpecialty] = useState(false);
+    const newTermTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (newTermTimeoutRef.current) {
+                clearTimeout(newTermTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // --- COMPUTED VALUES (MEMOS) ---
     const isPromotionSpecialtyValid = useMemo(() => {
@@ -834,6 +856,17 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
     }, [character.attributes, character.careerPath, isPrisonTerm]);
 
     const selectedCareerData = useMemo(() => selectedCareerKey ? gameData.CAREERS_DATA[selectedCareerKey] : null, [selectedCareerKey]);
+
+    const getHigherRank = useCallback((currentRank, startRank) => {
+        if (!startRank) return currentRank;
+        const startRankIndex = gameData.US_ARMY_RANKS.indexOf(startRank);
+        const currentRankIndex = currentRank ? gameData.US_ARMY_RANKS.indexOf(currentRank) : -1;
+        return currentRankIndex === -1 || startRankIndex > currentRankIndex ? startRank : currentRank;
+    }, []);
+
+    const effectiveRank = useMemo(() => {
+        return getHigherRank(character.rank, selectedCareerData?.startRank);
+    }, [character.rank, selectedCareerData, getHigherRank]);
 
     const isFirstMilitaryTerm = selectedCareerData?.type === 'military' && !character.careerPath.some(t => t.career.type === 'military');
 
@@ -908,13 +941,13 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         if (isFirstMilitaryTerm) {
             buttons.add('Ranged Combat');
         }
-        const isNCO = character.rank && gameData.US_ARMY_RANKS.indexOf(character.rank) >= gameData.US_ARMY_RANKS.indexOf('Corporal');
+        const isNCO = effectiveRank && gameData.US_ARMY_RANKS.indexOf(effectiveRank) >= gameData.US_ARMY_RANKS.indexOf('Corporal');
         
         if (isNCO && selectedCareerData?.type === 'military' && selectedCareerData?.name !== 'Officer') {
             buttons.add('Command');
         }
         return Array.from(buttons);
-    }, [selectedCareerData, isFirstMilitaryTerm, character.rank, officerFunctionalArea]);
+    }, [selectedCareerData, isFirstMilitaryTerm, effectiveRank, officerFunctionalArea]);
     
     useEffect(() => {
         if (promotionSpecialty !== 'Linguist') setLanguage('');
@@ -922,7 +955,10 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
 
     // --- LOGIC FUNCTIONS ---
     const startNewTerm = (isPrison) => {
-        setTimeout(() => {
+        if (newTermTimeoutRef.current) {
+            clearTimeout(newTermTimeoutRef.current);
+        }
+        newTermTimeoutRef.current = setTimeout(() => {
             setSkillIncreases([]);
             setPromotionResult(null);
             setPromotionSpecialty('');
@@ -934,6 +970,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
             } else {
                 setSelectedCareerKey('');
             }
+            newTermTimeoutRef.current = null;
         }, 3000);
     };
 
@@ -974,7 +1011,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
 
     const finalizeTerm = (agingChoice = null) => {
         let newCuf = character.cuf;
-        let newRank = character.rank;
+        let newRank = getHigherRank(character.rank, selectedCareerData.startRank);
         const finalSpecialty = promotionSpecialty === 'Linguist' ? `Linguist (${language.trim()})` : promotionSpecialty;
 
         if (promotionResult.success) {
@@ -1001,7 +1038,9 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         });
 
         const ageIncrease = d6();
+        const ageStart = character.age;
         const newAge = character.age + ageIncrease;
+        const ageEnd = newAge;
         let newAttributes = { ...character.attributes };
         
         if (agingChoice) {
@@ -1011,8 +1050,10 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         const updatedCharacter = {
             ...character, age: newAge, cuf: newCuf, rank: newRank, skills: newSkills, attributes: newAttributes,
             specialties: promotionSpecialty ? [...character.specialties, finalSpecialty].sort() : character.specialties,
-            careerPath: [...character.careerPath, { career: selectedCareerData, skillsIncreased: skillIncreases, promotion: promotionResult.success, specialtyGained: finalSpecialty, ageIncrease, functionalArea: officerFunctionalArea ? gameData.CAREERS_DATA[officerFunctionalArea].name : null }],
-            termsCompleted: character.termsCompleted + 1, finalCareer: selectedCareerData
+            careerPath: [...character.careerPath, { career: selectedCareerData, skillsIncreased: skillIncreases, promotion: promotionResult.success, specialtyGained: finalSpecialty, ageIncrease, ageStart, ageEnd, functionalArea: officerFunctionalArea ? gameData.CAREERS_DATA[officerFunctionalArea].name : null }],
+            termsCompleted: character.termsCompleted + 1,
+            finalCareer: selectedCareerData,
+            hasMilitaryService: character.hasMilitaryService || selectedCareerData.type === 'military'
         };
 
         setCharacter(updatedCharacter);
@@ -1045,22 +1086,6 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         setPromotionSpecialty('');
         setOfficerFunctionalArea('');
 
-        const careerData = gameData.CAREERS_DATA[newCareerKey];
-        if (careerData && careerData.type === 'military') {
-            setCharacter(p => ({ ...p, hasMilitaryService: true }));
-        }
-
-        if (careerData && careerData.startRank) {
-            const newStartRank = careerData.startRank;
-            const newStartRankIndex = gameData.US_ARMY_RANKS.indexOf(newStartRank);
-            
-            const currentRank = character.rank;
-            const currentRankIndex = currentRank ? gameData.US_ARMY_RANKS.indexOf(currentRank) : -1;
-
-            if (currentRankIndex === -1 || newStartRankIndex > currentRankIndex) {
-                setCharacter(p => ({...p, rank: newStartRank}));
-            }
-        }
     };
     
     const handleSkillIncrease = (skill) => {
@@ -1243,7 +1268,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
                     </div>
                     )}
                 </Card>
-                <CharacterStatus character={character} skillPreview={skillPreview} />
+                <CharacterStatus character={character} skillPreview={skillPreview} displayRank={effectiveRank} />
             </div>
         </>
     );
@@ -1320,7 +1345,7 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
             ...prev,
             skills: newSkills,
             specialties: [...prev.specialties, finalSpecialty].sort(),
-            careerPath: [...prev.careerPath, { career: {name: 'At War', type: 'military'}, skillsIncreased: skillIncreases, specialtyGained: finalSpecialty }],
+            careerPath: [...prev.careerPath, { career: {name: 'At War', type: 'military'}, skillsIncreased: skillIncreases, specialtyGained: finalSpecialty, ageStart: prev.age, ageEnd: prev.age }],
         }));
         nextStep();
     };
@@ -1395,7 +1420,12 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
 });
 
 const Step5_Finalize = memo(({ character, setCharacter, nextStep }) => {
+    const hasFinalizedRef = useRef(false);
+
     useEffect(() => {
+        if (hasFinalizedRef.current) return;
+        hasFinalizedRef.current = true;
+
         const isDraftee = character.finalCareer?.type === 'civilian' && character.finalCareer?.group !== 'Intelligence' && !character.isLocal;
         
         const strSize = gameData.DIE_SIZES[getDie(character.attributes.str)];
@@ -1520,7 +1550,7 @@ const CharacterSheet = memo(({ character, startOver }) => {
             const combatStats = [
                 { label: "Hit Capacity:", value: character.hitCapacity },
                 { label: "Stress Capacity:", value: character.stressCapacity },
-                { label: "Coolness Under Fire (CUF):", value: character.cuf },
+                { label: "Coolness Under Fire (CUF):", value: `${character.cuf} (${gameData.ATTRIBUTE_DICE[character.cuf]})` },
             ];
             if (character.rank) combatStats.push({ label: "Rank:", value: character.rank });
             combatStats.push({ label: "Permanent Rads:", value: character.rads });
@@ -1590,9 +1620,7 @@ const CharacterSheet = memo(({ character, startOver }) => {
                 doc.setFont("Inter", "normal");
                 doc.setFontSize(10);
                 character.careerPath.forEach((term, i) => {
-                    let label = `Term ${i}`;
-                    if (term.career.type === 'Childhood') label = 'Childhood';
-                    else if (term.career.name === 'At War') label = 'At War';
+                    const labelParts = formatCareerPathLabelParts(term, i);
                     
                     let careerName = term.career.name;
                     if (term.career.name === 'Officer' && term.functionalArea) {
@@ -1604,14 +1632,17 @@ const CharacterSheet = memo(({ character, startOver }) => {
                     const cleanedSkills = term.skillsIncreased.map(skill => skill.toString().replace(/^[^a-zA-Z]+/, ''));
                     const details = `${careerName ? `${careerName} ` : ''}(${cleanedSkills.join(', ')}) ${term.specialtyGained ? `-> ${term.specialtyGained}` : ''}`;
                     
-                    const labelText = `${label}:`;
+                    const mainLabelText = labelParts.main;
+                    const ageLabelText = labelParts.age;
                     doc.setFont("Inter", "bold");
-                    doc.text(labelText, margin, y);
-                    
-                    const labelWidth = doc.getTextWidth(labelText);
+                    doc.text(mainLabelText, margin, y);
+                    const mainLabelWidth = doc.getTextWidth(mainLabelText);
 
                     doc.setFont("Inter", "normal");
-                    doc.text(details, margin + labelWidth + 2, y);
+                    doc.text(`${ageLabelText}:`, margin + mainLabelWidth, y);
+                    const fullLabelWidth = mainLabelWidth + doc.getTextWidth(`${ageLabelText}:`);
+
+                    doc.text(details, margin + fullLabelWidth + 2, y);
                     y += 5.5;
                 });
             });
@@ -1662,7 +1693,7 @@ const CharacterSheet = memo(({ character, startOver }) => {
                         <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">COMBAT STATS</h3>
                         <p><span className="font-bold">Hit Capacity:</span> {character.hitCapacity}</p>
                         <p><span className="font-bold">Stress Capacity:</span> {character.stressCapacity}</p>
-                        <p><span className="font-bold">Coolness Under Fire (CUF):</span> {character.cuf}</p>
+                        <p><span className="font-bold">Coolness Under Fire (CUF):</span> {character.cuf} ({gameData.ATTRIBUTE_DICE[character.cuf]})</p>
                         {character.rank && <p><span className="font-bold">Rank:</span> {character.rank}</p>}
                         <p><span className="font-bold">Permanent Rads:</span> {character.rads}</p>
                     </div>
@@ -1709,12 +1740,7 @@ const CharacterSheet = memo(({ character, startOver }) => {
     		    <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">CAREER PATH</h3>
     		    <div>
         		{character.careerPath.map((term, i) => {
-            		    let label = `Term ${i}`;
-            		    if (term.career.type === 'Childhood') {
-                		label = 'Childhood';
-            		    } else if (term.career.name === 'At War') {
-                		label = 'At War';
-            		    }
+            		    const labelParts = formatCareerPathLabelParts(term, i);
             
             		    let careerName = term.career.name;
             		    if (term.career.name === 'Officer' && term.functionalArea) {
@@ -1731,7 +1757,7 @@ const CharacterSheet = memo(({ character, startOver }) => {
                     	    	    <div>•</div>
                     	    	    {/* Content Column */}
                     	    	    <div>
-                        	        <strong className="font-bold">{label}:</strong> {careerName ? `${careerName} ` : ''}({cleanedSkills.join(', ')}) {term.specialtyGained && `-> ${term.specialtyGained}`}
+                        	        <span><strong className="font-bold">{labelParts.main}</strong>{labelParts.age}: {careerName ? `${careerName} ` : ''}({cleanedSkills.join(', ')}) {term.specialtyGained && `-> ${term.specialtyGained}`}</span>
                     		    </div>
                 	        </div>
             		    );
