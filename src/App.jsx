@@ -549,7 +549,7 @@ const CharacterStatus = memo(({ character, skillPreview, displayRank = character
                 <h4 className="font-bold text-lg font-display text-yellow-500">Skills</h4>
                 <div className="grid grid-cols-2 gap-x-4">
                     {['str', 'agl', 'int', 'emp'].map(attrKey => {
-                        const skillsForAttr = Object.entries(skillPreview).filter(([skillName, _]) => gameData.SKILLS_DATA[skillName] === attrKey);
+                        const skillsForAttr = Object.entries(skillPreview).filter(([skillName]) => gameData.SKILLS_DATA[skillName] === attrKey);
                         if (skillsForAttr.length === 0) return <div key={attrKey}></div>;
                         return (
                             <div key={attrKey}>
@@ -580,6 +580,33 @@ const CharacterStatus = memo(({ character, skillPreview, displayRank = character
         </div>
     </Card>
 ));
+
+
+// Applies gendered surname endings for languages in the generator that use them.
+// American, German, and modern Swedish surnames are intentionally left unchanged.
+const applyGenderedSurname = (nationality, gender, surname) => {
+    if (gender !== 'female' || !surname) return surname;
+
+    if (nationality === 'polish') {
+        return surname
+            .replace(/dzki$/, 'dzka')
+            .replace(/cki$/, 'cka')
+            .replace(/ski$/, 'ska');
+    }
+
+    if (nationality === 'soviet') {
+        return surname
+            .replace(/skiy$/, 'skaya')
+            .replace(/sky$/, 'skaya')
+            .replace(/yev$/, 'yeva')
+            .replace(/ev$/, 'eva')
+            .replace(/yov$/, 'yova')
+            .replace(/ov$/, 'ova')
+            .replace(/in$/, 'ina');
+    }
+
+    return surname;
+};
 
 // ===================================================================================
 // --- STEP COMPONENT DEFINITIONS ---
@@ -612,7 +639,8 @@ const Step1_InitialSetup = memo(({ character, setCharacter, nextStep }) => {
         const firstNamePool = nameData[gender];
         
         const firstName = firstNamePool[Math.floor(Math.random() * firstNamePool.length)];
-        const lastName = nameData.last[Math.floor(Math.random() * nameData.last.length)];
+        const rawLastName = nameData.last[Math.floor(Math.random() * nameData.last.length)];
+        const lastName = applyGenderedSurname(nat, gender, rawLastName);
 
         setLocalName(`${firstName} ${lastName}`);
     };
@@ -755,7 +783,7 @@ const Step2_Childhood = memo(({ character, setCharacter, nextStep }) => {
     const isSpecialtyValid = useMemo(() => {
         if (!specialty) return false;
         if (specialty !== 'Linguist') return true;
-        if (!language) return false;
+        if (!language.trim()) return false;
         const finalSpecialty = `Linguist (${language.trim()})`;
         return !character.specialties.includes(finalSpecialty);
     }, [specialty, language, character.specialties]);
@@ -801,7 +829,7 @@ const Step2_Childhood = memo(({ character, setCharacter, nextStep }) => {
                 {specialty === 'Linguist' && (
                     <>
                         <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />
-                        {!isSpecialtyValid && language && <p className="text-red-500 text-sm">You already know this language.</p>}
+                        {!isSpecialtyValid && language.trim() && <p className="text-red-500 text-sm">You already know this language.</p>}
                     </>
                 )}
                 <Button onClick={handleNext} disabled={!childhood || !skill || !specialty || !isSpecialtyValid}>Continue to First Career</Button>
@@ -834,11 +862,13 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         };
     }, []);
 
+    const getReducibleAttributes = (attributes) => Object.keys(attributes).filter(attr => attributes[attr] !== 'D');
+
     // --- COMPUTED VALUES (MEMOS) ---
     const isPromotionSpecialtyValid = useMemo(() => {
         if (!promotionSpecialty) return false;
         if (promotionSpecialty !== 'Linguist') return true;
-        if (!language) return false;
+        if (!language.trim()) return false;
         const finalSpecialty = `Linguist (${language.trim()})`;
         return !character.specialties.includes(finalSpecialty);
     }, [promotionSpecialty, language, character.specialties]);
@@ -1066,16 +1096,22 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         setTermInfo({ processing: true }); // Prevent skill preview glitch
         const agingRoll = d8();
         const agingFailed = agingRoll < character.termsCompleted;
+        const reducibleAttributes = getReducibleAttributes(character.attributes);
         let agingMessage = `Aging Check (D8): Rolled ${agingRoll}. Need < ${character.termsCompleted}. No effect.`;
-        if (agingFailed) {
+
+        if (agingFailed && reducibleAttributes.length > 0) {
             agingMessage = `Aging Check (D8): Rolled ${agingRoll}. You must reduce one attribute!`;
             setShowAgingModal(true);
+            setTermInfo({ agingMessage });
+            return;
         }
-        setTermInfo({agingMessage});
 
-        if (!agingFailed) {
-            finalizeTerm();
+        if (agingFailed && reducibleAttributes.length === 0) {
+            agingMessage = `Aging Check (D8): Rolled ${agingRoll}. All attributes are already at D, so no attribute can be reduced further.`;
         }
+
+        setTermInfo({ agingMessage });
+        finalizeTerm();
     };
     
     const handleCareerSelection = (e) => {
@@ -1179,8 +1215,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
                             <p className="mb-4">{termInfo.agingMessage}</p>
                             <h4 className="font-bold mt-4">Choose an attribute to reduce by one step:</h4>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                {Object.keys(character.attributes)
-                                    .filter(a => character.attributes[a] !== 'D')
+                                {getReducibleAttributes(character.attributes)
                                     .map(attr => <Button key={attr} onClick={() => finalizeTerm(attr)}>{attr.toUpperCase()}</Button>
                                 )}
                             </div>
@@ -1257,7 +1292,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
                                         {promotionSpecialty === 'Linguist' && (
                                             <>
                                                 <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />
-                                                {!isPromotionSpecialtyValid && language && <p className="text-red-500 text-sm">You already know this language.</p>}
+                                                {!isPromotionSpecialtyValid && language.trim() && <p className="text-red-500 text-sm">You already know this language.</p>}
                                             </>
                                         )}
                                     </div>
@@ -1286,7 +1321,7 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
     const isFinalSpecialtyValid = useMemo(() => {
         if (!specialty) return false;
         if (specialty !== 'Linguist') return true;
-        if (!language) return false;
+        if (!language.trim()) return false;
         const finalSpecialty = `Linguist (${language.trim()})`;
         return !character.specialties.includes(finalSpecialty);
     }, [specialty, language, character.specialties]);
@@ -1300,25 +1335,32 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
     }, [needsRangedCombat]);
 
     const atWarSpecialtyOptions = useMemo(() => {
-        if (isDraftee) {
-            return gameData.AT_WAR_SPECIALTIES.Military.filter(s => !character.specialties.some(owned => owned.startsWith(s)));
-        }
-        const lastCareer = character.finalCareer;
-        if (!lastCareer) return [];
-        let options;
-        if (lastCareer.type === 'military') options = gameData.AT_WAR_SPECIALTIES.Military;
-        else {
-            switch(lastCareer.group) {
-                case 'Blue Collar': options = gameData.AT_WAR_SPECIALTIES['Blue Collar']; break;
-                case 'White Collar':
-                case 'Education': options = gameData.AT_WAR_SPECIALTIES['White Collar']; break;
-                default: options = gameData.AT_WAR_SPECIALTIES.Other;
-            }
-        }
-        return options.filter(s => {
+        const getAvailableSpecialties = (options) => options.filter(s => {
             if (s === 'Linguist') return true;
             return !character.specialties.some(owned => owned.startsWith(s));
         });
+
+        let options = [];
+        if (isDraftee) {
+            options = gameData.AT_WAR_SPECIALTIES.Military;
+        } else {
+            const lastCareer = character.finalCareer;
+            if (!lastCareer) return [];
+            if (lastCareer.type === 'military') options = gameData.AT_WAR_SPECIALTIES.Military;
+            else {
+                switch(lastCareer.group) {
+                    case 'Blue Collar': options = gameData.AT_WAR_SPECIALTIES['Blue Collar']; break;
+                    case 'White Collar':
+                    case 'Education': options = gameData.AT_WAR_SPECIALTIES['White Collar']; break;
+                    default: options = gameData.AT_WAR_SPECIALTIES.Other;
+                }
+            }
+        }
+
+        const primaryOptions = getAvailableSpecialties(options);
+        if (primaryOptions.length > 0) return primaryOptions;
+
+        return getAvailableSpecialties(gameData.ALL_SPECIALTIES);
     }, [character.finalCareer, character.specialties, isDraftee]);
 
     const handleSkillIncrease = (skill) => {
@@ -1406,7 +1448,7 @@ const Step4_AtWar = memo(({ character, setCharacter, nextStep }) => {
                         {specialty === 'Linguist' && (
                             <>
                                 <Input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Enter Language" />
-                                {!isFinalSpecialtyValid && language && <p className="text-red-500 text-sm">You already know this language.</p>}
+                                {!isFinalSpecialtyValid && language.trim() && <p className="text-red-500 text-sm">You already know this language.</p>}
                             </>
                         )}
                         </>
@@ -1515,8 +1557,8 @@ const CharacterSheet = memo(({ character, startOver }) => {
                 doc.text(`${attrKey.toUpperCase()}: ${character.attributes[attrKey]} (${gameData.ATTRIBUTE_DICE[character.attributes[attrKey]]})`, x, currentY);
                 currentY += 5;
 
-                const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === attrKey);
-                skillsForAttr.forEach(([skillName, _]) => {
+                const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([, attr]) => attr === attrKey);
+                skillsForAttr.forEach(([skillName]) => {
                     const skillLevel = character.skills[skillName] || '-';
                     const skillDie = skillLevel !== '-' ? `(${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
                     
@@ -1671,11 +1713,11 @@ const CharacterSheet = memo(({ character, startOver }) => {
                         <h3 className="text-xl font-display border-b border-zinc-600 mb-2 text-yellow-400">ATTRIBUTES & SKILLS</h3>
                          <div className="grid grid-cols-2 gap-x-4">
                             {['str', 'agl', 'int', 'emp'].map(attrKey => {
-                                const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([_, attr]) => attr === attrKey);
+                                const skillsForAttr = Object.entries(gameData.SKILLS_DATA).filter(([, attr]) => attr === attrKey);
                                 return (
                                     <div key={attrKey}>
                                         <h4 className="font-semibold mt-2 uppercase text-yellow-500">{attrKey}: {character.attributes[attrKey]} ({gameData.ATTRIBUTE_DICE[character.attributes[attrKey]]})</h4>
-                                        {skillsForAttr.map(([skillName, _]) => {
+                                        {skillsForAttr.map(([skillName]) => {
                                             const skillLevel = character.skills[skillName] || '-';
                                             const skillDie = skillLevel !== '-' ? `(${gameData.ATTRIBUTE_DICE[skillLevel]})` : '';
                                             return (
