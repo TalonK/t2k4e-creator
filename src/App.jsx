@@ -608,6 +608,131 @@ const applyGenderedSurname = (nationality, gender, surname) => {
     return surname;
 };
 
+
+// Display-only localized military rank names. The app keeps English rank names
+// internally so promotion logic and saved character data remain unchanged.
+const localizedRanks = {
+    "Private": {
+        soviet: "Ryadovoy",
+        polish: "Szeregowy",
+        swedish: "Menig",
+        german: "Soldat"
+    },
+    "Private First Class": {
+        polish: "Starszy szeregowy",
+        german: "Gefreiter"
+    },
+    "Corporal": {
+        soviet: "Efreitor",
+        polish: "Kapral",
+        swedish: "Korpral",
+        german: "Stabsgefreiter"
+    },
+    "Sergeant": {
+        soviet: "Mladshiy Serzhant",
+        polish: "Starszy kapral / Plutonowy",
+        swedish: "Furir",
+        german: "Unteroffizier"
+    },
+    "Staff Sergeant": {
+        soviet: "Serzhant",
+        polish: "Sierżant",
+        swedish: "Sergeant",
+        german: "Feldwebel"
+    },
+    "Sergeant First Class": {
+        soviet: "Starshiy Serzhant",
+        polish: "Starszy sierżant",
+        german: "Hauptfeldwebel"
+    },
+    "Master Sergeant": {
+        polish: "Młodszy chorąży",
+        german: "Stabsfeldwebel"
+    },
+    "First Sergeant": {
+        soviet: "Starshina",
+        polish: "Chorąży",
+        german: "Stabsfeldwebel"
+    },
+    "Sergeant Major": {
+        polish: "Starszy chorąży",
+        german: "Oberstabsfeldwebel"
+    },
+    "Second Lieutenant": {
+        soviet: "Mladshiy Leytenant",
+        polish: "Podporucznik",
+        swedish: "Fänrik",
+        german: "Leutnant"
+    },
+    "First Lieutenant": {
+        soviet: "Starshiy Leytenant",
+        polish: "Porucznik",
+        swedish: "Löjtnant",
+        german: "Oberleutnant"
+    },
+    "Captain": {
+        soviet: "Kapitan",
+        polish: "Kapitan",
+        swedish: "Kapten",
+        german: "Hauptmann"
+    },
+    "Major": {
+        soviet: "Mayor",
+        polish: "Major",
+        swedish: "Major",
+        german: "Major"
+    },
+    "Lieutenant Colonel": {
+        soviet: "Podpolkovnik",
+        polish: "Podpułkownik",
+        swedish: "Överstelöjtnant",
+        german: "Oberstleutnant"
+    },
+    "Colonel": {
+        soviet: "Polkovnik",
+        polish: "Pułkownik",
+        swedish: "Överste",
+        german: "Oberst"
+    },
+    "Brigadier General": {
+        soviet: "General-mayor",
+        polish: "Generał brygady",
+        swedish: "Brigadgeneral",
+        german: "Brigadegeneral"
+    },
+    "Major General": {
+        soviet: "General-leytenant",
+        polish: "Generał dywizji",
+        swedish: "Generalmajor",
+        german: "Generalmajor"
+    },
+    "Lieutenant General": {
+        soviet: "General-polkovnik",
+        polish: "Generał broni",
+        swedish: "Generallöjtnant",
+        german: "Generalleutnant"
+    },
+    "General": {
+        soviet: "General-armee",
+        polish: "Generał",
+        swedish: "General",
+        german: "General"
+    }
+};
+
+const getLocalizedRank = (rank, nationality) => {
+    if (!rank) return null;
+
+    const localized = localizedRanks[rank]?.[nationality];
+
+    if (!localized || localized === rank) {
+        return null;
+    }
+
+    return localized;
+};
+
+
 // ===================================================================================
 // --- STEP COMPONENT DEFINITIONS ---
 // These are the full components that will be lazy-loaded.
@@ -1594,33 +1719,69 @@ const CharacterSheet = memo(({ character, startOver }) => {
                 { label: "Stress Capacity:", value: character.stressCapacity },
                 { label: "Coolness Under Fire (CUF):", value: `${character.cuf} (${gameData.ATTRIBUTE_DICE[character.cuf]})` },
             ];
-            if (character.rank) combatStats.push({ label: "Rank:", value: character.rank });
+            if (character.rank) {
+                const localizedRank = getLocalizedRank(character.rank, character.nationality);
+                combatStats.push({ label: "Rank:", value: character.rank, localizedValue: localizedRank });
+            }
             combatStats.push({ label: "Permanent Rads:", value: character.rads });
 
             combatStats.forEach(stat => {
                 doc.setFont("Inter", "bold");
                 doc.setFontSize(10);
+
+                if (stat.fullWidth) {
+                    const valueStr = String(stat.value);
+                    const maxValueWidth = doc.internal.pageSize.getWidth() - margin - col3X - 2;
+
+                    doc.text(stat.label, col3X, y3);
+                    y3 += 4.5;
+
+                    doc.setFont("Inter", "normal");
+                    const splitValue = doc.splitTextToSize(valueStr, maxValueWidth);
+                    doc.text(splitValue, col3X + 2, y3);
+                    y3 += (splitValue.length * 4.5) + 1.5;
+                    return;
+                }
+
                 const labelWidth = doc.getTextWidth(stat.label);
+                const valueX = col3X + labelWidth + 2;
                 doc.text(stat.label, col3X, y3);
                 
                 doc.setFont("Inter", "normal");
                 const valueStr = String(stat.value);
-                doc.text(valueStr, col3X + labelWidth + 2, y3);
+                const maxValueWidth = doc.internal.pageSize.getWidth() - margin - valueX - 2;
 
-                if (stat.label === "Hit Capacity:" || stat.label === "Stress Capacity:") {
-                    const valueWidth = doc.getTextWidth(valueStr);
-                    let checkboxX = col3X + labelWidth + 2 + valueWidth + 3;
-                    const checkboxSize = 3;
-                    const checkboxSpacing = 1;
+                if (stat.localizedValue) {
+                    const inlineRankText = `${valueStr} (${stat.localizedValue})`;
 
-                    for (let i = 0; i < stat.value; i++) {
-                        if (checkboxX + checkboxSize > doc.internal.pageSize.getWidth() - margin) {
-                            break; 
+                    if (doc.getTextWidth(inlineRankText) <= maxValueWidth) {
+                        doc.text(inlineRankText, valueX, y3);
+                    } else {
+                        doc.text(valueStr, valueX, y3);
+                        const localizedLines = doc.splitTextToSize(`(${stat.localizedValue})`, maxValueWidth);
+                        y3 += 4.5;
+                        doc.text(localizedLines, valueX, y3);
+                        y3 += (localizedLines.length - 1) * 4.5;
+                    }
+                } else {
+                    doc.text(valueStr, valueX, y3);
+
+                    if (stat.label === "Hit Capacity:" || stat.label === "Stress Capacity:") {
+                        const valueWidth = doc.getTextWidth(valueStr);
+                        let checkboxX = valueX + valueWidth + 3;
+                        const checkboxSize = 3;
+                        const checkboxSpacing = 1;
+
+                        for (let i = 0; i < stat.value; i++) {
+                            if (checkboxX + checkboxSize > doc.internal.pageSize.getWidth() - margin) {
+                                break; 
+                            }
+                            doc.rect(checkboxX, y3 - checkboxSize, checkboxSize, checkboxSize);
+                            checkboxX += checkboxSize + checkboxSpacing;
                         }
-                        doc.rect(checkboxX, y3 - checkboxSize, checkboxSize, checkboxSize);
-                        checkboxX += checkboxSize + checkboxSpacing;
                     }
                 }
+
                 y3 += 5;
             });
 
@@ -1699,6 +1860,7 @@ const CharacterSheet = memo(({ character, startOver }) => {
     };
 
     const formattedNationality = character.nationality.charAt(0).toUpperCase() + character.nationality.slice(1);
+    const localizedRank = getLocalizedRank(character.rank, character.nationality);
 
     return (
         <>
@@ -1736,7 +1898,17 @@ const CharacterSheet = memo(({ character, startOver }) => {
                         <p><span className="font-bold">Hit Capacity:</span> {character.hitCapacity}</p>
                         <p><span className="font-bold">Stress Capacity:</span> {character.stressCapacity}</p>
                         <p><span className="font-bold">Coolness Under Fire (CUF):</span> {character.cuf} ({gameData.ATTRIBUTE_DICE[character.cuf]})</p>
-                        {character.rank && <p><span className="font-bold">Rank:</span> {character.rank}</p>}
+                        {character.rank && (
+                            <p className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-1">
+                                <span className="font-bold">Rank:</span>
+                                <span className="min-w-0">
+                                    {character.rank}
+                                    {localizedRank && (
+                                        <span className="inline-block whitespace-nowrap ml-1">({localizedRank})</span>
+                                    )}
+                                </span>
+                            </p>
+                        )}
                         <p><span className="font-bold">Permanent Rads:</span> {character.rads}</p>
                     </div>
                 </div>
