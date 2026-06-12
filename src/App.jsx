@@ -369,7 +369,7 @@ const gameData = {
     },
     ATTRIBUTE_DICE: { A: 'D12', B: 'D10', C: 'D8', D: 'D6' },
     DIE_SIZES: { D12: 12, D10: 10, D8: 8, D6: 6 },
-    US_ARMY_RANKS: ["Private", "Private First Class", "Corporal", "Sergeant", "Staff Sergeant", "Sergeant First Class", "Master Sergeant", "First Sergeant", "Sergeant Major", "Second Lieutenant", "First Lieutenant", "Captain", "Major", "Lieutenant Colonel", "Colonel"],
+    US_ARMY_RANKS: ["Private", "Private First Class", "Corporal / Specialist", "Sergeant", "Staff Sergeant", "Sergeant First Class", "Master Sergeant", "First Sergeant", "Sergeant Major", "Second Lieutenant", "First Lieutenant", "Captain", "Major", "Lieutenant Colonel", "Colonel"],
     CHILDHOODS: {
         "Street Kid": { skills: ["Close Combat", "Mobility", "Recon"], specialties: ["Brawler", "Melee", "Runner", "Infiltrator", "Scrounger", "Locksmith"] },
         "Small Town": { skills: ["Driving", "Ranged Combat", "Survival"], specialties: ["Biker", "Racer", "Sniper", "Farmer", "Hunter", "Quartermaster"] },
@@ -622,7 +622,7 @@ const localizedRanks = {
         polish: "Starszy szeregowy",
         german: "Gefreiter"
     },
-    "Corporal": {
+    "Corporal / Specialist": {
         soviet: "Efreitor",
         polish: "Kapral",
         swedish: "Korpral",
@@ -1096,7 +1096,7 @@ const Step3_CareerTerm = memo(({ character, setCharacter, nextStep, setWarBrokeO
         if (isFirstMilitaryTerm) {
             buttons.add('Ranged Combat');
         }
-        const isNCO = effectiveRank && gameData.US_ARMY_RANKS.indexOf(effectiveRank) >= gameData.US_ARMY_RANKS.indexOf('Corporal');
+        const isNCO = effectiveRank && gameData.US_ARMY_RANKS.indexOf(effectiveRank) >= gameData.US_ARMY_RANKS.indexOf('Corporal / Specialist');
         
         if (isNCO && selectedCareerData?.type === 'military' && selectedCareerData?.name !== 'Officer') {
             buttons.add('Command');
