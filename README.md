@@ -4,3 +4,5 @@ This is a web hosted app designed to guide
 the user thru Lifepath character creation
 using the 4th edition rules of the TTRPG
 Twilight:2000.
+
+https://talonk.github.io/t2k4e-creator/
